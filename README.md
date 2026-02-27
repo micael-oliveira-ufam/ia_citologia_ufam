@@ -3,9 +3,13 @@
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-EE4C2C)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B)
-![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-success)
+![Status](https://img.shields.io/badge/Status-Ativo-success)
+
+[![Acessar Aplicação](https://img.shields.io/badge/🌐_Acessar_Aplicação_Online-FF4B4B?style=for-the-badge&logo=streamlit)](https://ia-citologia-ufam.streamlit.app/)
 
 Plataforma online baseada em Inteligência Artificial para análise e classificação automatizada de lâminas de citologia em meio líquido, focada no rastreio precoce do câncer do colo do útero.
+
+---
 
 ## 📖 Sobre o Projeto
 
@@ -16,8 +20,6 @@ Utilizando Redes Neurais Convolucionais (arquitetura **ResNet50**), o modelo lê
 * **LSIL** (Lesão intraepitelial escamosa de baixo grau)
 * **HSIL** (Lesão intraepitelial escamosa de alto grau)
 * **SCC** (Carcinoma de células escamosas)
-
-[Image of a doctor using a clinical decision support system on a computer]
 
 ## ✨ Funcionalidades Principais
 
@@ -45,7 +47,7 @@ Este projeto é fruto de pesquisa acadêmica de Iniciação Científica (PIBIC) 
 
 ## 🚀 Como Executar o Projeto Localmente
 
-Siga os passos abaixo para rodar a aplicação na sua própria máquina:
+Caso deseje rodar o código-fonte na sua própria máquina, siga os passos abaixo:
 
 **1. Clone o repositório:**
 ```bash
