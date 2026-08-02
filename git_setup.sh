@@ -1,56 +1,95 @@
 #!/bin/bash
 
+# ==========================================
 # Configurações do GitHub
+# ==========================================
 GITHUB_USER="micael-oliveira-ufam"
 REPO_NAME="ia_citologia_ufam"
+BRANCH_NAME="main"
 
-# SUBST_TOKEN: Insira o seu NOVO Personal Access Token (PAT) do GitHub entre as aspas abaixo
-# ATENÇÃO: Nunca compartilhe este token publicamente.
-GITHUB_TOKEN=""
+# ==========================================
+# Autenticação Segura
+# ==========================================
 
-echo "=========================================================================="
-echo " Iniciando configuração do Git para: $REPO_NAME"
-echo "=========================================================================="
+# Solicita o token de forma oculta (-s) para não vazar no terminal
+read -s -p "🔑 Digite ou cole seu Personal Access Token (PAT) do GitHub: " GITHUB_TOKEN
+echo "" # Quebra de linha após a digitação oculta
 
-# 1. Criação do arquivo descritivo (opcional, caso não exista)
-if [ ! -f README.md ]; then
-    echo "# ia_citologia_ufam" >> README.md
-    echo "[+] Arquivo README.md criado."
+if [ -z "$GITHUB_TOKEN" ]; then
+    echo "❌ Erro: O Token não pode estar vazio."
+    exit 1
 fi
 
-# 2. Inicialização do repositório local
-git init
-echo "[+] Repositório Git inicializado localmente."
+# Constrói a URL de autenticação segura
+REMOTE_URL="https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${REPO_NAME}.git"
 
-# 3. Adição de TODOS os arquivos do diretório ao stage
-git add .
-echo "[+] Todos os arquivos do diretório local foram adicionados ao stage."
+# ==========================================
+# Validação e Configuração Inicial
+# ==========================================
 
-# 4. Primeiro commit local
-git commit -m "Atualização para o modelo ConvNext e desenvolvimento do app em Flutter"
+# 1. Verifica se já é um repositório git local. Se não, inicializa.
+if [ ! -d ".git" ]; then
+    echo "🔄 Inicializando um novo repositório Git local..."
+    git init
+    git branch -M "$BRANCH_NAME"
+fi
 
-# 5. Definição da branch principal para 'main'
-git branch -M main
-echo "[+] Branch principal configurada como 'main'."
-
-# 6. Configuração da URL remota injetando o Token de Autenticação de forma segura
-REMOTE_URL="https://${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${REPO_NAME}.git"
-
-# Remove a origin caso ela já exista de alguma tentativa anterior
-git remote remove origin 2>/dev/null
-git remote add origin "$REMOTE_URL"
-echo "[+] URL remota configurada com credenciais de autenticação."
-
-# 7. Upload do código para o servidor remoto do GitHub (USANDO --force)
-echo "[...] Realizando push forçado para a branch main remota..."
-git push -u origin main --force
-
-if [ $? -eq 0 ]; then
-    echo "=========================================================================="
-    echo " Repositório configurado e todos os arquivos enviados com sucesso!"
-    echo "=========================================================================="
+# 2. Configura ou atualiza a URL do repositório remoto de forma silenciosa
+# (Redirecionando a saída para /dev/null para não imprimir a URL com o token)
+if git remote | grep -q "^origin$"; then
+    echo "🔄 Atualizando as credenciais do repositório remoto 'origin'..."
+    git remote set-url origin "$REMOTE_URL" > /dev/null 2>&1
 else
-    echo "=========================================================================="
-    echo " Erro ao realizar o push. Verifique se o seu Token possui permissão de 'repo'."
-    echo "=========================================================================="
+    echo "➕ Adicionando o repositório remoto 'origin'..."
+    git remote add origin "$REMOTE_URL" > /dev/null 2>&1
 fi
+
+# ==========================================
+# Adição e Commit
+# ==========================================
+
+echo "📦 Adicionando arquivos modificados..."
+git add .
+
+# Verifica se há algo novo para "commitar"
+if git status --porcelain | grep -q "^"; then
+    # Pede o nome do commit; se deixar em branco, usa a data atual
+    read -p "💬 Digite a mensagem do commit (ou pressione Enter para usar a data atual): " COMMIT_MSG
+    
+    if [ -z "$COMMIT_MSG" ]; then
+        COMMIT_MSG="Atualização automática: $(date +'%Y-%m-%d %H:%M:%S')"
+    fi
+    
+    echo "💾 Criando o commit..."
+    git commit -m "$COMMIT_MSG"
+else
+    echo "✅ Nenhuma alteração detectada para criar um novo commit."
+fi
+
+# ==========================================
+# Sincronização e Envio (Proteção de Histórico)
+# ==========================================
+
+echo "🔄 Sincronizando com o GitHub..."
+
+# Tenta puxar alterações remotas para evitar divergências.
+git pull origin "$BRANCH_NAME" --rebase || true
+
+echo "🚀 Enviando código para o GitHub..."
+
+# Envio padrão. Se houver um conflito estrutural, o Git irá bloquear o envio em vez de apagar o histórico.
+# Redirecionamos os erros e acertos para evitar que o Git vaze a URL com o token em caso de falha.
+if git push -u origin "$BRANCH_NAME" --quiet; then
+    echo "✅ Repositório atualizado com sucesso no GitHub!"
+else
+    echo "❌ Ocorreu um erro ao enviar para o GitHub."
+    echo "Verifique se o Token tem as permissões corretas (repo) ou se há conflitos manuais que precisam ser resolvidos."
+    
+    # Remove a URL com token do repositório remoto por segurança após a falha
+    git remote set-url origin "https://github.com/${GITHUB_USER}/${REPO_NAME}.git"
+    exit 1
+fi
+
+# Limpa a URL do remote após o sucesso para não deixar o token salvo nas configurações locais do .git/config
+git remote set-url origin "https://github.com/${GITHUB_USER}/${REPO_NAME}.git"
+echo "🔒 Credenciais limpas do ambiente local."
