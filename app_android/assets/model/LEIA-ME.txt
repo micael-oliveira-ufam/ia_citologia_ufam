@@ -1,0 +1,8 @@
+O modelo ONNX é gerado por tools/export_onnx.py e fica neste diretório com o
+nome citologia_convnext.onnx. Ele não é versionado por causa do tamanho.
+
+  python3 tools/export_onnx.py \
+    --checkpoint convnext_liquid_based_citology_IARC_digital_atlas_06_05_26.pt \
+    --saida assets/model/citologia_convnext.onnx
+
+O build_apk.sh faz essa exportação sozinho se encontrar o checkpoint na raiz.

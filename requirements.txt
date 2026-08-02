@@ -1,0 +1,10 @@
+streamlit>=1.39
+torch>=2.2
+torchvision>=0.17
+albumentations>=1.4
+opencv-python-headless>=4.9
+matplotlib>=3.8
+numpy>=1.26
+pandas>=2.2
+Pillow>=10.2
+qrcode[pil]>=7.4

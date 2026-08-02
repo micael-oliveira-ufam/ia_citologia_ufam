@@ -1,0 +1,31 @@
+name: citopred
+description: CitoPred. Apoio ao diagnóstico citológico em meio líquido com IA embarcada, UFAM e SEMSA Manaus.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Inferência ONNX nativa. >=1.5.1 é exigido pela regra de páginas de 16 KB
+  # do Google Play; a 1.8.x embarca o ONNX Runtime 1.23.
+  flutter_onnxruntime: ^1.8.2
+  # Decodificação, redimensionamento e composição do mapa de calor.
+  image: ^4.3.0
+  # Seleção de imagem da galeria e captura pela câmera.
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/model/
+    - assets/exemplos/
+    - assets/logos/
+    - assets/icone/
