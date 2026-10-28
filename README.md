@@ -9,6 +9,7 @@ Classificação de citologia em meio líquido pelo Sistema Bethesda com ConvNeXt
 ## 🔗 Acesso às Plataformas
 
 - **Plataforma de Diagnóstico Citológico:** [ia-citologia-ufam.streamlit.app](https://ia-citologia-ufam.streamlit.app/)
+- **Site (GitHub Pages): catálogo de lâminas e predição de imagens, em módulos separados:** [micael-oliveira-ufam.github.io/ia_citologia_ufam](https://micael-oliveira-ufam.github.io/ia_citologia_ufam/) *(ativo após publicar o modelo e habilitar o Pages em `main` / `/docs`)*
 - **Sistema Automatizado para Catalogação de Lâminas (Citoatlas Sebastião Marinho):** [citoatlas-semsa-sebastiao-marinho.ai.studio](https://citoatlas-semsa-sebastiao-marinho.ai.studio/)
 
 ---
@@ -47,3 +48,13 @@ assets/
 exemplos/
   cyto5940.jpg  cyt14686a.jpg     campos com gabarito do atlas
   cyto5950.jpg  cyto2870.jpg  cyt10131a.jpg  cyt16243.jpg
+app/                              aplicativo Flutter (Android/iOS): paciente ou profissional,
+                                  análise de citologia (modelo baixado do GitHub Pages) e catálogo de lâminas
+docs/                             site no GitHub Pages (index, catalogo.html, predicao.html, model/)
+ml/                               treino do modelo de risco (Python)
+firebase/firestore.rules.sugerido regras sugeridas do Firestore (revisar antes de publicar)
+```
+
+> O aplicativo, o site e o passo a passo de compilação, publicação do modelo e login Google estão em
+> [`app/README.md`](app/README.md), incluindo o que foi e o que **não** foi verificado.
+> A plataforma Streamlit (`app.py`) segue como está.

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colo do Útero com IA — UFAM · SEMSA</title>
+  <meta name="description" content="Catálogo de lâminas de citopatologia e análise de campos de citologia em meio líquido com inteligência artificial, direto no navegador. Projeto acadêmico UFAM / SEMSA.">
+  <meta name="theme-color" content="#0e6b7b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230e6b7b%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2714%27 font-family=%27sans-serif%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3ECU%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <div class="topo__in">
+      <a class="marca" href="index.html">
+        <span class="marca__icone" aria-hidden="true">CU</span>
+        <span class="marca__nome">Colo do Útero com IA<span class="marca__sub">UFAM · SEMSA</span></span>
+      </a>
+      <nav class="menu" aria-label="Principal">
+        <a href="index.html" data-pagina="inicio">Início</a>
+        <a href="catalogo.html" data-pagina="catalogo">Catálogo</a>
+        <a href="predicao.html" data-pagina="predicao">Predição</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <h1>Colo do Útero com IA</h1>
+    <p class="lead">
+      Dois módulos independentes para o trabalho com citologia cervical: consultar o acervo de
+      lâminas do laboratório e analisar um campo de citologia em meio líquido com um modelo de
+      inteligência artificial que roda no seu navegador.
+    </p>
+
+    <div class="modulos">
+      <article class="cartao modulo">
+        <span class="etiqueta">Módulo 1</span>
+        <h2>Catálogo de lâminas</h2>
+        <p>Acervo do CitoAtlas (Laboratório Profº Sebastião Marinho): imagens com zoom, ID, data e
+           número de avaliações. A avaliação é cega, então as classificações não aparecem.</p>
+        <a class="btn" href="catalogo.html">Abrir o catálogo</a>
+      </article>
+      <article class="cartao modulo">
+        <span class="etiqueta">Módulo 2</span>
+        <h2>Predição de citologia</h2>
+        <p>Envie a foto de um campo e veja a categoria de Bethesda mais provável (NILM, LSIL, HSIL,
+           SCC), as probabilidades e o mapa de calor. A imagem não sai do seu dispositivo.</p>
+        <a class="btn" href="predicao.html">Abrir a predição</a>
+      </article>
+    </div>
+
+    <section class="cartao pilha" aria-labelledby="app">
+      <h2 id="app">Aplicativo para Android e iOS</h2>
+      <p>
+        O mesmo conteúdo, mais a parte de conscientização e prevenção para pacientes e a
+        estimativa educativa de risco, está no aplicativo <strong>Colo do Útero IA</strong>.
+        Ao abrir, a pessoa escolhe se é paciente ou profissional de saúde. O catálogo e a
+        predição aparecem no modo profissional.
+      </p>
+      <p><a data-repo="/releases" href="#">Baixar o aplicativo (página de versões no GitHub)</a></p>
+    </section>
+
+    <div class="aviso" style="margin-top:16px">
+      <strong>Uso acadêmico.</strong> O modelo de citologia foi treinado apenas com o conjunto
+      público IARC Digital Atlas, sem aprovação de Comitê de Ética. Não emite laudo, não substitui
+      o citopatologista e não deve receber imagens de pacientes.
+    </div>
+  </main>
+
+  <footer class="rodape">
+    <div class="rodape__in">
+      <p>Desenvolvido por Micael Davi Lima de Oliveira, sob orientação do Prof. Dr. Toni Ricardo Martins
+         (FCF / UFAM). Parceria SEMSA Manaus e IComp/UFAM.</p>
+      <p><a data-repo="" href="#">Código-fonte no GitHub</a></p>
+    </div>
+  </footer>
+  <script type="module">
+    import { iniciarPagina } from './js/comum.js';
+    iniciarPagina('inicio');
+  </script>
+</body>
+</html>

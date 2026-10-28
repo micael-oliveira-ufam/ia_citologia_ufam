@@ -1,0 +1,41 @@
+name: colo_ia
+description: Colo do útero com IA — conscientização e prevenção para pacientes; análise de citologia em meio líquido e material de orientação para profissionais de saúde. UFAM & SEMSA.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Inferência ONNX nativa (citologia). >=1.5.1 é exigido pela regra de páginas
+  # de 16 KB do Google Play; a 1.8.x embarca o ONNX Runtime 1.23.
+  flutter_onnxruntime: ^1.8.2
+  # Decodificação, redimensionamento e composição do mapa de calor.
+  image: ^4.3.0
+  # Seleção de imagem da galeria e captura pela câmera.
+  image_picker: ^1.1.2
+  # Abrir as fontes das estatísticas no navegador.
+  url_launcher: ^6.3.0
+  # Baixa o modelo (GitHub Pages) e fala com o Firestore por REST.
+  http: ^1.2.2
+  # Pasta interna do aplicativo, onde o modelo baixado fica guardado.
+  path_provider: ^2.1.4
+  # Confere a integridade (SHA-256) do modelo baixado.
+  crypto: ^3.0.5
+  # Login com Google do catálogo de lâminas.
+  google_sign_in: ^7.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/exemplos/    # campos do IARC Digital Atlas
+    - assets/risco/       # modelo de risco (gerado por ml/train.py)
+    - assets/dados/       # estatisticas.json
+    - assets/graficos/    # gráficos de desempenho (gerados por ml/train.py)

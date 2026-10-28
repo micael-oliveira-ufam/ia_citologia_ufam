@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Predição de citologia — Colo do Útero com IA</title>
+  <meta name="description" content="Análise de campos de citologia em meio líquido (Sistema Bethesda) com inteligência artificial, direto no navegador. A imagem não sai do seu dispositivo.">
+  <meta name="theme-color" content="#0e6b7b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230e6b7b%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2714%27 font-family=%27sans-serif%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3ECU%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <div class="topo__in">
+      <a class="marca" href="index.html">
+        <span class="marca__icone" aria-hidden="true">CU</span>
+        <span class="marca__nome">Colo do Útero com IA<span class="marca__sub">UFAM · SEMSA</span></span>
+      </a>
+      <nav class="menu" aria-label="Principal">
+        <a href="index.html" data-pagina="inicio">Início</a>
+        <a href="catalogo.html" data-pagina="catalogo">Catálogo</a>
+        <a href="predicao.html" data-pagina="predicao">Predição</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <h1>Predição de citologia</h1>
+    <p class="lead">
+      Escolha uma imagem de citologia em meio líquido. A análise roda neste navegador e a imagem
+      não é enviada a lugar nenhum. A rede só é usada para baixar o modelo, uma única vez.
+    </p>
+
+    <div class="aviso">
+      <strong>Ferramenta acadêmica em desenvolvimento.</strong> Treinada apenas com o conjunto
+      público IARC Digital Atlas, sem aprovação de Comitê de Ética. Não emite laudo, não substitui
+      o citopatologista e não deve receber imagens de pacientes.
+    </div>
+
+    <section class="cartao pilha" style="margin-top:16px" aria-labelledby="t-modelo">
+      <h2 id="t-modelo">Modelo</h2>
+      <div class="modelo-estado">
+        <p id="modelo-msg" role="status" aria-live="polite" class="pequeno">Consultando o modelo publicado…</p>
+        <button class="btn" id="modelo-baixar" type="button" hidden>Baixar o modelo</button>
+        <button class="btn btn--sec" id="modelo-remover" type="button" hidden>Remover do navegador</button>
+      </div>
+      <progress id="modelo-prog" max="100" hidden aria-label="Progresso do download do modelo"></progress>
+    </section>
+
+    <div class="duas" style="margin-top:16px">
+      <section class="cartao pilha" aria-labelledby="t-img">
+        <h2 id="t-img">Imagem</h2>
+        <div class="zona" id="zona">
+          <img class="zona__previa" id="previa" alt="" hidden>
+          <p class="pequeno" id="previa-msg">Arraste uma imagem para cá ou escolha abaixo.</p>
+          <div class="botoes">
+            <label class="btn" for="arquivo">Escolher imagem</label>
+            <label class="btn btn--sec" for="camera">Usar a câmera</label>
+          </div>
+          <input class="so-leitor" type="file" id="arquivo" accept="image/*">
+          <input class="so-leitor" type="file" id="camera" accept="image/*" capture="environment">
+        </div>
+        <div>
+          <h3>Campos de exemplo</h3>
+          <p class="pequeno">Imagens do IARC Digital Atlas, para conhecer a ferramenta sem usar material de paciente.</p>
+          <div class="exemplos" id="exemplos"></div>
+        </div>
+      </section>
+
+      <section class="cartao pilha" aria-labelledby="t-an">
+        <h2 id="t-an">Análise</h2>
+        <label style="display:flex; gap:10px; align-items:flex-start">
+          <input type="checkbox" id="robustez" checked style="margin-top:5px; width:18px; height:18px">
+          <span><strong>Verificar robustez.</strong>
+            <span class="pequeno" style="display:block">Analisa o campo em oito orientações e informa se a rede muda de opinião.
+            Fica mais lento (oito passagens pelo modelo).</span></span>
+        </label>
+        <button class="btn btn--bloco" id="analisar" type="button" disabled>Analisar o campo</button>
+        <progress id="analise-prog" max="8" hidden aria-label="Progresso da análise"></progress>
+        <p class="pequeno">
+          O botão libera quando o modelo estiver pronto e houver uma imagem. Para fotografar pela
+          ocular do microscópio, encoste a câmera na lente e enquadre só o campo iluminado.
+        </p>
+      </section>
+    </div>
+
+    <div id="resultado" style="margin-top:16px" aria-live="polite" hidden></div>
+  </main>
+
+  <footer class="rodape">
+    <div class="rodape__in">
+      <p>Ferramenta acadêmica. Não emite laudo e não substitui o citopatologista.</p>
+      <p>Motor de inferência: ONNX Runtime Web (MIT), servido por este mesmo site.
+         <a data-repo="" href="#">Código-fonte no GitHub</a></p>
+    </div>
+  </footer>
+  <script type="module" src="js/predicao.js"></script>
+</body>
+</html>

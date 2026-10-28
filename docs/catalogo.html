@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catálogo de lâminas — Colo do Útero com IA</title>
+  <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Leitura pública, com avaliação cega preservada.">
+  <meta name="theme-color" content="#0e6b7b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230e6b7b%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2714%27 font-family=%27sans-serif%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3ECU%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <div class="topo__in">
+      <a class="marca" href="index.html">
+        <span class="marca__icone" aria-hidden="true">CU</span>
+        <span class="marca__nome">Colo do Útero com IA<span class="marca__sub">UFAM · SEMSA</span></span>
+      </a>
+      <nav class="menu" aria-label="Principal">
+        <a href="index.html" data-pagina="inicio">Início</a>
+        <a href="catalogo.html" data-pagina="catalogo">Catálogo</a>
+        <a href="predicao.html" data-pagina="predicao">Predição</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <h1>Catálogo de lâminas</h1>
+    <p class="lead">
+      Catálogo Eletrônico de Lâminas de Citopatologia do Laboratório Profº Sebastião Marinho
+      (CitoAtlas). Esta página é só de consulta.
+    </p>
+
+    <div class="aviso">
+      <strong>Avaliação cega.</strong> Para não influenciar os citopatologistas que ainda vão
+      avaliar, esta página <strong>não mostra classificações, descrições nem avaliadores</strong>:
+      só a imagem, o ID, a data e quantas avaliações cada lâmina já recebeu. O quórum oficial
+      exige a concordância de pelo menos 3 citopatologistas. Para cadastrar lâminas e avaliar,
+      use o CitoAtlas ou o aplicativo (modo profissional).
+    </div>
+
+    <div class="barra" role="search">
+      <div class="campo campo--busca">
+        <label for="busca">Buscar pelo ID (ex.: L-0012)</label>
+        <input id="busca" type="search" autocomplete="off" placeholder="L-0001">
+      </div>
+      <div class="campo">
+        <label for="filtro-votos">Avaliações</label>
+        <select id="filtro-votos">
+          <option value="todas">Todas</option>
+          <option value="sem">Sem votos</option>
+          <option value="andamento">Em andamento (1 ou 2)</option>
+          <option value="quorum">Quórum atingido (3 ou mais)</option>
+        </select>
+      </div>
+      <span class="contagem" id="contagem" aria-live="polite"></span>
+    </div>
+    <p class="pequeno" id="nota-votos" hidden></p>
+
+    <div id="status" hidden></div>
+    <div class="grade" id="grade"></div>
+    <p style="text-align:center; margin-top:20px">
+      <button class="btn btn--sec" id="mais" type="button" hidden>Carregar mais lâminas</button>
+    </p>
+
+    <section class="cartao" style="margin-top:28px" aria-labelledby="creditos">
+      <h2 id="creditos">Sobre este acervo</h2>
+      <p class="pequeno">
+        Desenvolvido por <strong>Micael Davi Lima de Oliveira</strong>, sob orientação do
+        <strong>Prof. Dr. Toni Ricardo Martins</strong> (FCF / UFAM). Parceria de validação
+        clínica e citopatológica com a SEMSA Manaus; professores pesquisadores parceiros do
+        IComp/UFAM. IDs fora do formato L-0000 aparecem como código curto, por privacidade.
+        Uso acadêmico.
+      </p>
+    </section>
+  </main>
+
+  <dialog class="visor" id="visor" aria-labelledby="visor-titulo">
+    <div class="visor__in">
+      <div class="visor__topo">
+        <h2 id="visor-titulo"></h2>
+        <button class="btn btn--sec" id="visor-fechar" type="button">Fechar</button>
+      </div>
+      <div class="visor__palco" id="palco" tabindex="0" role="img" aria-label="Imagem da lâmina. Arraste para mover; use +, − e 0 para ampliar, reduzir e ajustar.">
+        <img id="visor-img" alt="">
+      </div>
+      <div class="visor__rodape">
+        <div class="visor__ctl">
+          <button class="btn btn--sec" id="zoom-menos" type="button" aria-label="Reduzir">−</button>
+          <button class="btn btn--sec" id="zoom-ajustar" type="button">Ajustar</button>
+          <button class="btn btn--sec" id="zoom-mais" type="button" aria-label="Ampliar">+</button>
+        </div>
+        <span id="zoom-valor" aria-live="polite"></span>
+        <span class="pequeno" id="visor-info"></span>
+      </div>
+    </div>
+  </dialog>
+
+  <footer class="rodape">
+    <div class="rodape__in">
+      <p>Ferramenta acadêmica. Não emite laudo e não substitui o citopatologista.</p>
+      <p><a data-repo="" href="#">Código-fonte no GitHub</a></p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/catalogo.js"></script>
+</body>
+</html>

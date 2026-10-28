@@ -1,0 +1,7 @@
+.fuse_hidden*
+.DS_Store
+__pycache__/
+*.pyc
+app/build/
+app/.dart_tool/
+app/dist/
