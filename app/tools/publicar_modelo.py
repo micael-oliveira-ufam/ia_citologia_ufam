@@ -27,6 +27,7 @@ from pathlib import Path
 CLASSES = ["SCC", "HSIL", "LSIL", "NILM"]  # mesma ordem de lib/data/bethesda.dart
 NOME_ARQUIVO = "citologia_convnext.onnx"
 LIMITE_GITHUB = 100 * 1024 * 1024
+TAMANHO_PARTE = 64 * 1024 * 1024
 
 
 def sha256_de(caminho: Path) -> str:
@@ -64,18 +65,20 @@ def main() -> int:
     ap.add_argument("--arquitetura", default=None, help="ex.: convnext_tiny (padrão: lida do .onnx)")
     ap.add_argument("--quantizacao", default=None, choices=["int8", "float32"],
                     help="como o arquivo foi gerado (informativo)")
+    ap.add_argument("--parte-mib", type=int, default=64,
+                    help="tamanho das partes, em MiB, se o modelo passar de 100 MB (padrão: 64)")
     args = ap.parse_args()
+    tamanho_parte = args.parte_mib * 1024 * 1024
 
     if not args.onnx.is_file():
         sys.exit(f"arquivo não encontrado: {args.onnx}")
 
     tamanho = args.onnx.stat().st_size
     print(f"[1/3] Conferindo {args.onnx} ({tamanho / 1048576:.1f} MB)")
-    if tamanho >= LIMITE_GITHUB:
-        sys.exit(
-            "O arquivo tem 100 MB ou mais: o GitHub recusa o push. Use a variante menor do ConvNeXt "
-            "ou a quantização int8 (padrão do export_onnx.py)."
-        )
+    dividir = tamanho >= LIMITE_GITHUB
+    if dividir:
+        print("  ≥ 100 MB: o GitHub recusaria o arquivo inteiro; ele será publicado em partes "
+              "(o site e o app as juntam e conferem o SHA-256 do todo).")
 
     meta = ler_metadados(args.onnx)
     if meta:
@@ -91,7 +94,24 @@ def main() -> int:
     destino = args.saida
     destino.mkdir(parents=True, exist_ok=True)
     sha = sha256_de(args.onnx)
-    shutil.copyfile(args.onnx, destino / NOME_ARQUIVO)
+    for velho in destino.glob(NOME_ARQUIVO + "*"):
+        velho.unlink()  # versões antigas (inteiro ou partes)
+    partes = []
+    if dividir:
+        with args.onnx.open("rb") as f:
+            n = 0
+            while True:
+                bloco = f.read(tamanho_parte)
+                if not bloco:
+                    break
+                n += 1
+                nome = f"{NOME_ARQUIVO}.parte{n:02d}"
+                (destino / nome).write_bytes(bloco)
+                partes.append({"arquivo": nome, "bytes": len(bloco),
+                               "sha256": hashlib.sha256(bloco).hexdigest()})
+        print(f"  {len(partes)} partes de até {args.parte_mib} MiB")
+    else:
+        shutil.copyfile(args.onnx, destino / NOME_ARQUIVO)
 
     manifesto = {
         "esquema": 1,
@@ -99,6 +119,7 @@ def main() -> int:
         "arquivo": NOME_ARQUIVO,
         "bytes": tamanho,
         "sha256": sha,
+        "partes": partes or None,
         "classes": CLASSES,
         "entrada": {"nome": "imagem", "forma": [1, 3, 224, 224], "formato": "RGB [0,1], NCHW"},
         "saidas": ["logits", "cam"],

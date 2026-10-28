@@ -29,6 +29,7 @@ class ManifestoModelo {
     required this.bytes,
     required this.sha256,
     required this.url,
+    this.partes = const [],
     this.arquitetura,
     this.quantizacao,
   });
@@ -38,6 +39,10 @@ class ManifestoModelo {
   final int bytes;
   final String sha256;
   final Uri url;
+
+  /// Quando o arquivo passa de 100 MB (limite do GitHub), ele é publicado em
+  /// partes; o app as baixa em ordem, junta e confere o SHA-256 do todo.
+  final List<({Uri url, int bytes})> partes;
   final String? arquitetura;
   final String? quantizacao;
 
@@ -80,6 +85,28 @@ class ManifestoModelo {
       throw invalido('o arquivo precisa estar no mesmo site, em HTTPS');
     }
 
+    var partes = <({Uri url, int bytes})>[];
+    final brutas = json['partes'];
+    if (brutas != null) {
+      if (brutas is! List || brutas.isEmpty || brutas.length > 20) {
+        throw invalido('partes');
+      }
+      var soma = 0;
+      for (final p in brutas) {
+        if (p is! Map || p['arquivo'] is! String || p['bytes'] is! int ||
+            (p['bytes'] as int) <= 0) {
+          throw invalido('parte inválida');
+        }
+        final u = urlManifesto.resolve(p['arquivo'] as String);
+        if (u.scheme != 'https' || u.host != urlManifesto.host) {
+          throw invalido('as partes precisam estar no mesmo site, em HTTPS');
+        }
+        partes.add((url: u, bytes: p['bytes'] as int));
+        soma += p['bytes'] as int;
+      }
+      if (soma != bytes) throw invalido('a soma das partes difere do tamanho');
+    }
+
     final arquitetura = json['arquitetura'];
     final quantizacao = json['quantizacao'];
     return ManifestoModelo(
@@ -88,6 +115,7 @@ class ManifestoModelo {
       bytes: bytes,
       sha256: hash,
       url: url,
+      partes: partes,
       arquitetura: arquitetura is String ? arquitetura : null,
       quantizacao: quantizacao is String ? quantizacao : null,
     );
@@ -101,6 +129,9 @@ class ManifestoModelo {
         'arquitetura': arquitetura,
         'quantizacao': quantizacao,
       };
+
+  List<({Uri url, int bytes})> get partesParaBaixar =>
+      partes.isEmpty ? [(url: url, bytes: bytes)] : partes;
 
   String get tamanhoLegivel => formatarBytes(bytes);
 }
@@ -341,37 +372,42 @@ class GerenciadorModelo extends ChangeNotifier {
       parcial = File('${destino.path}.parcial');
       if (await parcial.exists()) await parcial.delete();
 
-      final pedido = http.Request('GET', alvo.url);
-      final resposta =
-          await _cliente.send(pedido).timeout(const Duration(seconds: 30));
-      if (resposta.statusCode != 200) {
-        throw ErroModelo(
-          'O arquivo do modelo não foi encontrado (erro ${resposta.statusCode}).',
-        );
-      }
-
       saida = parcial.openWrite();
       final sorvedouro = _SorvedouroDigest();
       final hash = sha256.startChunkedConversion(sorvedouro);
       var recebido = 0;
       var ultimoPercentual = -1;
 
-      await for (final bloco
-          in resposta.stream.timeout(const Duration(seconds: 30))) {
-        if (_cancelar) throw _Cancelado();
-        recebido += bloco.length;
-        if (recebido > alvo.bytes) {
+      for (final parte in alvo.partesParaBaixar) {
+        final pedido = http.Request('GET', parte.url);
+        final resposta =
+            await _cliente.send(pedido).timeout(const Duration(seconds: 30));
+        if (resposta.statusCode != 200) {
           throw ErroModelo(
-            'O arquivo baixado é maior do que o manifesto declara. Descartado.',
+            'O arquivo do modelo não foi encontrado (erro ${resposta.statusCode}).',
           );
         }
-        saida.add(bloco);
-        hash.add(bloco);
-        final percentual = (recebido * 100) ~/ alvo.bytes;
-        if (percentual != ultimoPercentual) {
-          ultimoPercentual = percentual;
-          _progresso = recebido / alvo.bytes;
-          notifyListeners();
+        final limiteParte = recebido + parte.bytes;
+        await for (final bloco
+            in resposta.stream.timeout(const Duration(seconds: 30))) {
+          if (_cancelar) throw _Cancelado();
+          recebido += bloco.length;
+          if (recebido > limiteParte) {
+            throw ErroModelo(
+              'O arquivo baixado é maior do que o manifesto declara. Descartado.',
+            );
+          }
+          saida.add(bloco);
+          hash.add(bloco);
+          final percentual = (recebido * 100) ~/ alvo.bytes;
+          if (percentual != ultimoPercentual) {
+            ultimoPercentual = percentual;
+            _progresso = recebido / alvo.bytes;
+            notifyListeners();
+          }
+        }
+        if (recebido != limiteParte) {
+          throw ErroModelo('O download terminou incompleto. Tente de novo.');
         }
       }
       hash.close();

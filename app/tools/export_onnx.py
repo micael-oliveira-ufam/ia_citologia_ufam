@@ -74,10 +74,19 @@ def carregar(caminho):
     sd = extrair_state_dict(bruto)
     variante = detectar_variante(sd)
     modelo = getattr(models, variante)(weights=None)
-    modelo.classifier[2] = nn.Linear(modelo.classifier[2].in_features, len(CLASS_NAMES))
+    entradas = modelo.classifier[2].in_features
+    if "classifier.2.1.weight" in sd:
+        # Cabeça treinada como Sequential(Dropout, Linear): os pesos ficam em
+        # classifier.2.1.*. Sem isto, a cabeça ficaria aleatória.
+        modelo.classifier[2] = nn.Sequential(nn.Dropout(0.5), nn.Linear(entradas, len(CLASS_NAMES)))
+    else:
+        modelo.classifier[2] = nn.Linear(entradas, len(CLASS_NAMES))
     faltando, sobrando = modelo.load_state_dict(sd, strict=False)
     if faltando or sobrando:
-        print(f"  aviso: {len(faltando)} pesos ausentes, {len(sobrando)} inesperados")
+        raise SystemExit(
+            f"ERRO: o checkpoint não casa com a arquitetura ({len(faltando)} pesos ausentes: "
+            f"{list(faltando)[:3]}; {len(sobrando)} inesperados: {list(sobrando)[:3]}). "
+            "Exportar assim geraria um modelo com pesos aleatórios.")
     modelo.eval()
     return modelo, variante
 
@@ -94,7 +103,8 @@ class ConvNextExportavel(nn.Module):
         self.features = base.features
         self.avgpool = base.avgpool
         self.norm = base.classifier[0]   # LayerNorm2d
-        self.fc = base.classifier[2]     # Linear
+        cabeca = base.classifier[2]
+        self.fc = cabeca[-1] if isinstance(cabeca, nn.Sequential) else cabeca  # Linear
         self.register_buffer("media", torch.tensor(IMAGENET_MEAN).view(1, 3, 1, 1))
         self.register_buffer("desvio", torch.tensor(IMAGENET_STD).view(1, 3, 1, 1))
 
@@ -102,7 +112,10 @@ class ConvNextExportavel(nn.Module):
         x = (imagem - self.media) / self.desvio
         f = self.features(x)                              # [B, C, 7, 7]
         logits = self.fc(torch.flatten(self.norm(self.avgpool(f)), 1))
-        cam = torch.einsum("bchw,kc->bkhw", self.norm(f), self.fc.weight)
+        # MatMul (e não einsum): a quantização int8 do onnxruntime trata MatMul
+        # com peso constante, mas quebra o einsum.
+        cam = torch.matmul(self.norm(f).permute(0, 2, 3, 1), self.fc.weight.t())
+        cam = cam.permute(0, 3, 1, 2)
         return logits, cam
 
 

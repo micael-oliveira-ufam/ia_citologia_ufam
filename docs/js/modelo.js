@@ -63,9 +63,23 @@ function validarManifesto(m, urlManifesto) {
       `(${JSON.stringify(ORDEM_DO_MODELO)}). A análise foi bloqueada para não inverter diagnósticos.`,
     );
   }
+  const origem = new URL(urlManifesto).origin;
   const url = new URL(m.arquivo, urlManifesto);
-  if (url.origin !== new URL(urlManifesto).origin) throw ruim('o arquivo precisa estar no mesmo site');
-  return { ...m, urlArquivo: url.href };
+  if (url.origin !== origem) throw ruim('o arquivo precisa estar no mesmo site');
+  // Arquivos de 100 MB ou mais não cabem no GitHub: o modelo pode vir em partes,
+  // concatenadas aqui e conferidas pelo SHA-256 do arquivo inteiro.
+  let partes = [{ url: url.href, bytes: m.bytes }];
+  if (m.partes !== undefined) {
+    if (!Array.isArray(m.partes) || m.partes.length < 1 || m.partes.length > 20) throw ruim('partes');
+    partes = m.partes.map((p) => {
+      if (!p || typeof p.arquivo !== 'string' || !Number.isInteger(p.bytes) || p.bytes <= 0) throw ruim('parte inválida');
+      const u = new URL(p.arquivo, urlManifesto);
+      if (u.origin !== origem) throw ruim('as partes precisam estar no mesmo site');
+      return { url: u.href, bytes: p.bytes };
+    });
+    if (partes.reduce((a, p) => a + p.bytes, 0) !== m.bytes) throw ruim('a soma das partes difere do tamanho');
+  }
+  return { ...m, urlArquivo: url.href, partes };
 }
 
 function urlVersionada(m) {
@@ -120,27 +134,34 @@ export async function obterModelo(m, { aoProgredir, sinal } = {}) {
   const guardado = await lerDoCache(m);
   if (guardado) { aoProgredir?.(m.bytes, m.bytes); return guardado; }
 
-  let resp;
-  try {
-    resp = await fetch(urlVersionada(m), { signal: sinal, cache: 'no-store' });
-  } catch (e) {
-    throw new ErroModelo('rede', 'O download do modelo falhou. Verifique a conexão e tente de novo.', String(e));
-  }
-  if (!resp.ok) {
-    throw new ErroModelo('download', `O arquivo do modelo não foi encontrado (HTTP ${resp.status}).`);
-  }
   const corpo = new Uint8Array(m.bytes);
   let recebido = 0;
-  const leitor = resp.body.getReader();
-  for (;;) {
-    const { done, value } = await leitor.read();
-    if (done) break;
-    if (recebido + value.length > m.bytes) {
-      throw new ErroModelo('tamanho', 'O arquivo baixado é maior do que o manifesto declara. Descartado.');
+  for (const parte of m.partes) {
+    const url = m.partes.length === 1 ? urlVersionada(m) : `${parte.url}?v=${m.sha256.slice(0, 16)}`;
+    let resp;
+    try {
+      resp = await fetch(url, { signal: sinal, cache: 'no-store' });
+    } catch (e) {
+      throw new ErroModelo('rede', 'O download do modelo falhou. Verifique a conexão e tente de novo.', String(e));
     }
-    corpo.set(value, recebido);
-    recebido += value.length;
-    aoProgredir?.(recebido, m.bytes);
+    if (!resp.ok) {
+      throw new ErroModelo('download', `O arquivo do modelo não foi encontrado (HTTP ${resp.status}).`);
+    }
+    const limiteParte = recebido + parte.bytes;
+    const leitor = resp.body.getReader();
+    for (;;) {
+      const { done, value } = await leitor.read();
+      if (done) break;
+      if (recebido + value.length > limiteParte) {
+        throw new ErroModelo('tamanho', 'O arquivo baixado é maior do que o manifesto declara. Descartado.');
+      }
+      corpo.set(value, recebido);
+      recebido += value.length;
+      aoProgredir?.(recebido, m.bytes);
+    }
+    if (recebido !== limiteParte) {
+      throw new ErroModelo('tamanho', 'O download terminou incompleto. Tente de novo.');
+    }
   }
   if (recebido !== m.bytes) {
     throw new ErroModelo('tamanho', 'O download terminou incompleto. Tente de novo.');

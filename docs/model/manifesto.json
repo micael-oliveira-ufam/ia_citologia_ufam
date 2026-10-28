@@ -1,0 +1,67 @@
+{
+  "esquema": 1,
+  "versao": "2026-08-01",
+  "arquivo": "citologia_convnext.onnx",
+  "bytes": 197416947,
+  "sha256": "d525cdc613a398dd0674dd3ae52b76ec9c5dcc8fc1bdf3c8ce69b92eab509bfc",
+  "partes": [
+    {
+      "arquivo": "citologia_convnext.onnx.parte01",
+      "bytes": 29360128,
+      "sha256": "69bc332a2f4805287edcac12c855577952ce4275fac2dcf8725e688377085a0f"
+    },
+    {
+      "arquivo": "citologia_convnext.onnx.parte02",
+      "bytes": 29360128,
+      "sha256": "eb3cb0d4db2cc170eb8637518097007b42995d9320d055788da3e2143ebdb1f9"
+    },
+    {
+      "arquivo": "citologia_convnext.onnx.parte03",
+      "bytes": 29360128,
+      "sha256": "ca162e7acfb9a06855dc6c3bd1d1e615de0dbb86d654357e1134b96173f2123c"
+    },
+    {
+      "arquivo": "citologia_convnext.onnx.parte04",
+      "bytes": 29360128,
+      "sha256": "bc304172c2f42394e690027461316d85727708747e859c0824748bd549cf42c3"
+    },
+    {
+      "arquivo": "citologia_convnext.onnx.parte05",
+      "bytes": 29360128,
+      "sha256": "da392136282dfd8487f64787abc3ba98146057e17be32dd70562e264c3c8bb8a"
+    },
+    {
+      "arquivo": "citologia_convnext.onnx.parte06",
+      "bytes": 29360128,
+      "sha256": "cd281d8d3ac6e6ef86f7b1c54a1750bcba126e1f62615a370dc32307ce5b23f1"
+    },
+    {
+      "arquivo": "citologia_convnext.onnx.parte07",
+      "bytes": 21256179,
+      "sha256": "e7156882344ad09de892cdc754a28e7c9a368af0ab51039c6e38bdd3bceb5d06"
+    }
+  ],
+  "classes": [
+    "SCC",
+    "HSIL",
+    "LSIL",
+    "NILM"
+  ],
+  "entrada": {
+    "nome": "imagem",
+    "forma": [
+      1,
+      3,
+      224,
+      224
+    ],
+    "formato": "RGB [0,1], NCHW"
+  },
+  "saidas": [
+    "logits",
+    "cam"
+  ],
+  "arquitetura": "convnext_large",
+  "quantizacao": "int8",
+  "criado_em": "2026-10-28T09:19:50Z"
+}
