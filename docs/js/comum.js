@@ -79,11 +79,8 @@ export function urlImagemSegura(url) {
   return null;
 }
 
-/** Marca o link do menu da página atual e preenche links do repositório. */
-export function iniciarPagina(atual) {
-  for (const a of document.querySelectorAll('.menu a')) {
-    if (a.dataset.pagina === atual) a.setAttribute('aria-current', 'page');
-  }
+/** Preenche os links do repositório (data-repo). */
+export function iniciarPagina() {
   for (const a of document.querySelectorAll('[data-repo]')) {
     a.href = REPOSITORIO + (a.dataset.repo || '');
   }

@@ -3,36 +3,49 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Catálogo de lâminas — Colo do Útero com IA</title>
+  <title>Catálogo de lâminas | IA Citologia UFAM &amp; SEMSA | Citopatologia com Inteligência Artificial</title>
+  <script>document.documentElement.classList.add("js")</script>
   <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Consulta com login Google e avaliação cega preservada.">
   <meta name="theme-color" content="#0e6b7b">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230e6b7b%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2714%27 font-family=%27sans-serif%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3ECU%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/site.css">
+  <link rel="preload" href="fontes/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/site.css?v=2">
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
-  <header class="topo">
-    <div class="topo__in">
-      <a class="marca" href="index.html">
-        <span class="marca__icone" aria-hidden="true">CU</span>
-        <span class="marca__nome">Colo do Útero com IA<span class="marca__sub">UFAM · SEMSA</span></span>
-      </a>
-      <nav class="menu" aria-label="Principal">
-        <a href="index.html" data-pagina="inicio">Início</a>
-        <a href="catalogo.html" data-pagina="catalogo">Catálogo</a>
-        <a href="predicao.html" data-pagina="predicao">Predição</a>
-      </nav>
+  <div class="pagina">
+
+<header class="cabecalho">
+  <div class="cab-linha">
+    <a class="cab-logo cab-logo--ufam" href="index.html" aria-label="Início"><img src="img/logo_ufam.png" alt="Universidade Federal do Amazonas" width="86"></a>
+    <div class="cab-titulo">
+      <div class="sobrancelha">UFAM · IComp · SEMSA Manaus</div>
+      <h1>Sistema de Apoio ao Diagnóstico Citológico</h1>
+      <p class="subtitulo">Citologia em meio líquido classificada pelo Sistema Bethesda, com ConvNeXt Large e mapa de atenção Grad-CAM.</p>
     </div>
-  </header>
+    <div class="cab-logos">
+      <img src="img/logo-icomp.png" alt="Instituto de Computação, UFAM" height="52">
+      <img src="img/semsa.png" alt="Secretaria Municipal de Saúde de Manaus" height="52">
+    </div>
+  </div>
+  <div class="creditos">
+    <div class="credito-bloco"><div class="credito-titulo">Desenvolvimento</div>
+      <div class="credito-nome">Micael Davi Lima de Oliveira</div><div class="credito-sub">Iniciação Científica · FCF/UFAM</div></div>
+    <div class="credito-bloco"><div class="credito-titulo">Coordenação</div>
+      <div class="credito-nome">Prof. Dr. Toni Ricardo Martins</div><div class="credito-sub">Faculdade de Ciências Farmacêuticas · UFAM</div></div>
+    <div class="credito-bloco"><div class="credito-titulo">Pesquisadores parceiros · IComp/UFAM</div>
+      <div class="credito-nome">Profa. Dra. Fabíola Nakamura<br>Prof. Dr. Felipe Gomes de Oliveira</div></div>
+    <div class="credito-bloco"><div class="credito-titulo">Validação clínica · SEMSA Manaus</div>
+      <div class="credito-nome">Dra. Ivanete · Dra. Carol</div><div class="credito-sub">Especialistas clínicas e citopatologistas</div></div>
+  </div>
+  <div class="faixa-etica" role="note">Ferramenta acadêmica em desenvolvimento. O modelo foi treinado <strong>exclusivamente com acervos públicos de imagens</strong>; nenhuma amostra de paciente do serviço foi utilizada. Por isso o projeto <strong>ainda não possui aprovação de Comitê de Ética em Pesquisa (CEP/CONEP)</strong> e <strong>não pode ser usado para decisão clínica, laudo ou triagem assistencial</strong>.</div>
+</header>
+<nav class="abas" aria-label="Seções do site"><a href="index.html#analise" data-secao="analise">Análise</a><a href="index.html#bethesda" data-secao="bethesda">Sistema Bethesda</a><a href="index.html#validacao" data-secao="validacao">Validação do algoritmo</a><a href="index.html#exemplos" data-secao="exemplos">Imagens de teste</a><a href="index.html#equipe" data-secao="equipe">Equipe e parcerias</a><a href="index.html#dados" data-secao="dados">Dados e créditos</a><a href="catalogo.html" data-secao="catalogo" aria-current="page">Catálogo de lâminas</a></nav>
+    <main id="conteudo" tabindex="-1">
 
-  <main id="conteudo">
-    <h1>Catálogo de lâminas</h1>
-    <p class="lead">
-      Catálogo Eletrônico de Lâminas de Citopatologia do Laboratório Profº Sebastião Marinho
-      (CitoAtlas). Esta página é só de consulta.
-    </p>
-
-    <div id="login" class="cartao">
+    <h2 class="titulo-secao">Catálogo de lâminas</h2>
+    <p class="legenda">Catálogo Eletrônico de Lâminas de Citopatologia do Laboratório Profº Sebastião Marinho (CitoAtlas). Esta página é só de consulta.</p>
+<div id="login" class="cartao">
       <h2>Entre para ver o catálogo</h2>
       <p>O acervo das lâminas é restrito. Entre com a sua conta Google para consultá-lo.</p>
       <div id="botao-google"></div>
@@ -74,19 +87,7 @@
       </p>
     </div>
 
-    <section class="cartao" style="margin-top:28px" aria-labelledby="creditos">
-      <h2 id="creditos">Sobre este acervo</h2>
-      <p class="pequeno">
-        Desenvolvido por <strong>Micael Davi Lima de Oliveira</strong>, sob orientação do
-        <strong>Prof. Dr. Toni Ricardo Martins</strong> (FCF / UFAM). Parceria de validação
-        clínica e citopatológica com a SEMSA Manaus; professores pesquisadores parceiros do
-        IComp/UFAM. IDs fora do formato L-0000 aparecem como código curto, por privacidade.
-        Uso acadêmico.
-      </p>
-    </section>
-  </main>
-
-  <dialog class="visor" id="visor" aria-labelledby="visor-titulo">
+<dialog class="visor" id="visor" aria-labelledby="visor-titulo">
     <div class="visor__in">
       <div class="visor__topo">
         <h2 id="visor-titulo"></h2>
@@ -107,13 +108,25 @@
     </div>
   </dialog>
 
-  <footer class="rodape">
-    <div class="rodape__in">
-      <p>Ferramenta acadêmica. Não emite laudo e não substitui o citopatologista.</p>
-      <p><a data-repo="" href="#">Código-fonte no GitHub</a></p>
-    </div>
-  </footer>
+    </main>
 
-  <script type="module" src="js/catalogo.js"></script>
+<footer class="rodape">
+  <div>
+    <strong>Sistema de Apoio ao Diagnóstico Citológico</strong><br>
+    Faculdade de Ciências Farmacêuticas e Instituto de Computação · UFAM<br>
+    Secretaria Municipal de Saúde de Manaus · Laboratório Sebastião Marinho<br>
+    <a href="https://github.com/micael-oliveira-ufam/ia_citologia_ufam" target="_blank" rel="noopener">Código-fonte no GitHub</a> ·
+    <a href="https://github.com/micael-oliveira-ufam/ia_citologia_ufam/releases" target="_blank" rel="noopener">Aplicativo Android/iOS</a> ·
+    <a href="https://ia-citologia-ufam.streamlit.app/" target="_blank" rel="noopener">Versão anterior (Streamlit)</a>
+  </div>
+  <div class="rodape-dir">
+    <span class="ano">© 2026</span> · Projeto de pesquisa acadêmica<br>
+    Modelo <code>ConvNeXt Large</code> · IARC Digital Atlas e Mendeley Data<br>
+    Sem aprovação de CEP · Não emite laudo<br>
+    <span class="rodape-mini">Código desenvolvido com apoio de Claude Opus 5 (Anthropic)</span>
+  </div>
+</footer>
+  </div>
+  <script type="module" src="js/catalogo.js?v=2"></script>
 </body>
 </html>

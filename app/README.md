@@ -55,7 +55,8 @@ app/                      projeto Flutter
   tools/ajustar_plataformas.py               nome do app e permissões do iOS
   build_apk.sh                               gera os APKs
   test/                                      testes (modelo de risco contra scikit-learn; abertura do app)
-docs/                     SITE (GitHub Pages): index, catalogo.html, predicao.html, js/, vendor/onnxruntime-web
+docs/                     SITE (GitHub Pages), no estilo da versão Streamlit: index.html (6 abas), catalogo.html, js/, css/, fontes/, img/, vendor/onnxruntime-web
+ferramentas/              gerar_site.py + conteudo_site.py: geram docs/index.html, catalogo.html e js/dados.js (fonte única dos textos e números)
   model/                                     citologia_convnext.onnx + manifesto.json  <- GERADO por tools/publicar_modelo.py
 firebase/firestore.rules.sugerido            regras sugeridas (revisar!)
 ml/                       treino do modelo de risco (Python) e dados
@@ -159,13 +160,13 @@ Dados: UCI, *Cervical Cancer (Risk Factors)* — 858 pacientes do Hospital Unive
   foi escrito. Rode `flutter analyze` e `flutter test` primeiro; podem aparecer erros de
   compilação ou avisos de lint que a revisão estática não pega. Os dois testes de abertura
   (`test/widget_test.dart`) também nunca foram executados.
-- O `.onnx` não foi gerado (o checkpoint não estava disponível): o app e o site mostram "modelo
-  ainda não publicado" até você rodar o passo 1. O **site** foi testado em Chromium real (56
-  verificações) com um modelo de brinquedo de mesma assinatura e com o Firestore simulado; com o
-  modelo real e o banco real isso **não** foi testado (o acesso à rede do banco foi bloqueado).
+- O `.onnx` foi gerado a partir do checkpoint v.1.1 (ConvNeXt Large, int8, 188 MB, em 7 partes) e
+  o **site** foi testado em Chromium real, inclusive com o modelo real e com o Firestore simulado;
+  com o banco real só o fluxo de login foi verificado até onde o Google Cloud permite (veja abaixo).
   O **download do modelo, o catálogo e o login Google do app** são código Dart nunca compilado.
-- Redimensionamento: o site imita o do Pillow (usado no treino); o app usa o do pacote `image`
-  (bilinear sem antialiasing), que pode divergir um pouco nas probabilidades.
+- Redimensionamento: site, treino e Streamlit usam `cv2.INTER_LINEAR` (o site reproduz esse filtro
+  e foi conferido contra o OpenCV); o app usa o do pacote `image` (bilinear sem antialiasing), que
+  pode divergir um pouco nas probabilidades.
 - iOS: nada foi construído. Confirme no pub.dev que a versão usada de `flutter_onnxruntime`
   suporta iOS e qual a versão mínima exigida.
 - Estatísticas (`app/assets/dados/estatisticas.json`): 3 de 6 foram conferidas em matérias

@@ -5,10 +5,12 @@
 // imagem.dart) e o script de exportação (app/tools/export_onnx.py):
 //   entrada  RGB em [0,1], NCHW, 1x3x224x224 (normalização ImageNet no grafo)
 //   saídas   logits [1,4] e cam [1,4,7,7]
-// O redimensionamento é o bilinear com suavização do Pillow (Image.BILINEAR),
-// o mesmo usado na conferência numérica do export_onnx.py.
+// O redimensionamento é o do treinamento e da plataforma Streamlit: Albumentations Resize,
+// ou seja, cv2.INTER_LINEAR (bilinear de 2x2 vizinhos, sem suavização ao reduzir).
+// O mapa de calor segue o do Streamlit: cv2.resize bilinear do mapa 7x7 até o tamanho
+// da imagem, colormap INFERNO e mistura 0,6 imagem + 0,4 cor.
 
-import { ORDEM_DO_MODELO } from './bethesda.js';
+import { ORDEM_DO_MODELO, LIMIAR_CONFIANCA, LIMIAR_CONCORDANCIA } from './bethesda.js';
 
 export const LADO = 224;
 export const LADO_CAM = 7;
@@ -208,99 +210,48 @@ export async function criarSessao(buffer) {
   return { ort, sessao, entrada: sessao.inputNames[0] };
 }
 
-// ------------------------------------------------- pré-processamento (Pillow)
-
-const PRECISAO = 22; // bits de ponto fixo, como no Pillow
-
-function filtroBilinear(x) {
-  x = Math.abs(x);
-  return x < 1 ? 1 - x : 0;
-}
-
-function coeficientes(entrada, saida) {
-  const escala = entrada / saida;
-  const escalaFiltro = Math.max(escala, 1);
-  const suporte = escalaFiltro; // suporte do bilinear = 1
-  const tam = Math.ceil(suporte) * 2 + 1;
-  const inicios = new Int32Array(saida);
-  const contagens = new Int32Array(saida);
-  const pesos = new Int32Array(saida * tam);
-  const tmp = new Float64Array(tam);
-  for (let i = 0; i < saida; i++) {
-    const centro = (i + 0.5) * escala;
-    let xmin = Math.trunc(centro - suporte + 0.5);
-    if (xmin < 0) xmin = 0;
-    let xmax = Math.trunc(centro + suporte + 0.5);
-    if (xmax > entrada) xmax = entrada;
-    xmax -= xmin;
-    let soma = 0;
-    for (let x = 0; x < xmax; x++) {
-      const w = filtroBilinear((x + xmin - centro + 0.5) / escalaFiltro);
-      tmp[x] = w;
-      soma += w;
-    }
-    for (let x = 0; x < xmax; x++) {
-      const w = soma !== 0 ? tmp[x] / soma : tmp[x];
-      pesos[i * tam + x] = Math.trunc(w * (1 << PRECISAO) + (w < 0 ? -0.5 : 0.5));
-    }
-    inicios[i] = xmin;
-    contagens[i] = xmax;
-  }
-  return { inicios, contagens, pesos, tam };
-}
-
-function limitar8(v) {
-  v >>= PRECISAO;
-  return v < 0 ? 0 : v > 255 ? 255 : v;
-}
+// ------------------------------------------- pré-processamento (cv2.INTER_LINEAR)
 
 /**
- * Redimensiona RGBA (Uint8ClampedArray, largura x altura) para RGB do tamanho
- * pedido, com o mesmo algoritmo do Pillow: passada horizontal e depois vertical,
- * aritmética de ponto fixo com arredondamento a cada passada.
+ * Reproduz cv2.resize(..., INTER_LINEAR) para imagens de 8 bits: coordenada de origem
+ * (x + 0,5) * escala - 0,5, pesos em ponto fixo de 11 bits e arredondamento no fim.
+ * Não há suavização ao reduzir (só os 2x2 vizinhos contam), igual ao treinamento.
  */
-export function redimensionarComoPillow(rgba, larg, alt, novaLarg, novaAlt) {
-  const h = coeficientes(larg, novaLarg);
-  const v = coeficientes(alt, novaAlt);
-  const meio = new Uint8Array(alt * novaLarg * 3);
-  const metade = 1 << (PRECISAO - 1);
-
-  for (let y = 0; y < alt; y++) {
-    for (let x = 0; x < novaLarg; x++) {
-      const ini = h.inicios[x];
-      const n = h.contagens[x];
-      let r = metade, g = metade, b = metade;
-      for (let k = 0; k < n; k++) {
-        const w = h.pesos[x * h.tam + k];
-        const p = (y * larg + ini + k) * 4;
-        r += rgba[p] * w;
-        g += rgba[p + 1] * w;
-        b += rgba[p + 2] * w;
-      }
-      const o = (y * novaLarg + x) * 3;
-      meio[o] = limitar8(r);
-      meio[o + 1] = limitar8(g);
-      meio[o + 2] = limitar8(b);
+export function redimensionarLinear(rgba, larg, alt, novaLarg, novaAlt) {
+  const BITS = 11;
+  const ESC = 1 << BITS;
+  const eixo = (n, novo) => {
+    const ini = new Int32Array(novo), fim = new Int32Array(novo), w1 = new Int32Array(novo);
+    const escala = n / novo;
+    for (let i = 0; i < novo; i++) {
+      let f = (i + 0.5) * escala - 0.5;
+      let s0 = Math.floor(f);
+      f -= s0;
+      if (s0 < 0) { f = 0; s0 = 0; }
+      if (s0 >= n - 1) { f = 0; s0 = n - 1; }
+      ini[i] = s0;
+      fim[i] = Math.min(s0 + 1, n - 1);
+      w1[i] = Math.round(f * ESC);
     }
-  }
-
+    return { ini, fim, w1 };
+  };
+  const X = eixo(larg, novaLarg);
+  const Y = eixo(alt, novaAlt);
   const saida = new Uint8Array(novaAlt * novaLarg * 3);
+  const meio = 1 << (2 * BITS - 1);
   for (let y = 0; y < novaAlt; y++) {
-    const ini = v.inicios[y];
-    const n = v.contagens[y];
+    const r0 = Y.ini[y] * larg, r1 = Y.fim[y] * larg;
+    const b1 = Y.w1[y], b0 = ESC - b1;
     for (let x = 0; x < novaLarg; x++) {
-      let r = metade, g = metade, b = metade;
-      for (let k = 0; k < n; k++) {
-        const w = v.pesos[y * v.tam + k];
-        const p = ((ini + k) * novaLarg + x) * 3;
-        r += meio[p] * w;
-        g += meio[p + 1] * w;
-        b += meio[p + 2] * w;
-      }
+      const a1 = X.w1[x], a0 = ESC - a1;
+      const p00 = (r0 + X.ini[x]) * 4, p01 = (r0 + X.fim[x]) * 4;
+      const p10 = (r1 + X.ini[x]) * 4, p11 = (r1 + X.fim[x]) * 4;
       const o = (y * novaLarg + x) * 3;
-      saida[o] = limitar8(r);
-      saida[o + 1] = limitar8(g);
-      saida[o + 2] = limitar8(b);
+      for (let c = 0; c < 3; c++) {
+        const topo = rgba[p00 + c] * a0 + rgba[p01 + c] * a1;
+        const base = rgba[p10 + c] * a0 + rgba[p11 + c] * a1;
+        saida[o + c] = (topo * b0 + base * b1 + meio) >> (2 * BITS);
+      }
     }
   }
   return saida;
@@ -323,7 +274,7 @@ async function decodificar(blob) {
   }
 }
 
-/** Imagem (File/Blob) -> { tensor Float32 [3*224*224], rgb Uint8 [224*224*3], largura, altura }. */
+/** Imagem (File/Blob) -> { tensor Float32 [3*224*224], rgb Uint8 [224*224*3], exibicao (canvas), largura, altura }. */
 export async function prepararImagem(blob) {
   let fonte;
   try { fonte = await decodificar(blob); } catch (_) {
@@ -344,7 +295,15 @@ export async function prepararImagem(blob) {
   fonte.close?.();
   const rgba = ctx.getImageData(0, 0, larg, alt).data;
 
-  const rgb = redimensionarComoPillow(rgba, larg, alt, LADO, LADO);
+  const rgb = redimensionarLinear(rgba, larg, alt, LADO, LADO);
+
+  // Cópia para exibição (o mapa de calor é desenhado sobre o campo original, como no
+  // Streamlit), limitada a 1024 px no maior lado para não pesar no celular.
+  const reducao = Math.min(1, 1024 / Math.max(larg, alt));
+  const exibicao = document.createElement('canvas');
+  exibicao.width = Math.max(1, Math.round(larg * reducao));
+  exibicao.height = Math.max(1, Math.round(alt * reducao));
+  exibicao.getContext('2d').drawImage(cv, 0, 0, exibicao.width, exibicao.height);
   const total = LADO * LADO;
   const tensor = new Float32Array(3 * total);
   for (let i = 0; i < total; i++) {
@@ -352,7 +311,7 @@ export async function prepararImagem(blob) {
     tensor[total + i] = rgb[i * 3 + 1] / 255;
     tensor[2 * total + i] = rgb[i * 3 + 2] / 255;
   }
-  return { tensor, rgb, largura: larg, altura: alt };
+  return { tensor, rgb, exibicao, largura: larg, altura: alt };
 }
 
 /** Uma das oito simetrias do quadrado (idêntica a aplicarSimetria do aplicativo). */
@@ -449,70 +408,72 @@ export async function analisar(modelo, preparada, { robustez = false, aoProgredi
     probRobustez,
     siglaRobustez: probRobustez ? ORDEM_DO_MODELO[indiceMaior(probRobustez)] : null,
     concordancia,
-    instavel: confianca < 0.6 || (concordancia != null && concordancia < 0.75),
+    instavel: confianca < LIMIAR_CONFIANCA || (concordancia != null && concordancia < LIMIAR_CONCORDANCIA),
     milissegundos: Math.round(performance.now() - t0),
   };
 }
 
 // ------------------------------------------------------------ mapa de calor
 
-// Rampa quente (aproximação de "inferno"), igual à do aplicativo: legível também
-// em escala de cinza.
-const RAMPA = [[0, 0, 4], [87, 16, 110], [188, 55, 84], [249, 142, 9], [252, 255, 164]];
+// Colormap INFERNO (256 entradas, as mesmas de cv2.COLORMAP_INFERNO), em hexadecimal.
+const INFERNO_HEX = "00000401000501010601010802010a02020c02020e03021004031204031405041706041907051b08051d09061f0a07220b07240c08260d08290e092b10092d110a30120a32140b34150b37160b39180c3c190c3e1b0c411c0c431e0c451f0c48210c4a230c4c240c4f260c51280b53290b552b0b572d0b592f0a5b310a5c320a5e340a5f3609613809623909633b09643d09653e0966400a67420a68440a68450a69470b6a490b6a4a0c6b4c0c6b4d0d6c4f0d6c510e6c520e6d540f6d550f6d57106e59106e5a116e5c126e5d126e5f136e61136e62146e64156e65156e67166e69166e6a176e6c186e6d186e6f196e71196e721a6e741a6e751b6e771c6d781c6d7a1d6d7c1d6d7d1e6d7f1e6c801f6c82206c84206b85216b87216b88226a8a226a8c23698d23698f24699025689225689326679526679727669827669a28659b29649d29649f2a63a02a63a22b62a32c61a52c60a62d60a82e5fa92e5eab2f5ead305dae305cb0315bb1325ab3325ab43359b63458b73557b93556ba3655bc3754bd3853bf3952c03a51c13a50c33b4fc43c4ec63d4dc73e4cc83f4bca404acb4149cc4248ce4347cf4446d04545d24644d34743d44842d54a41d74b3fd84c3ed94d3dda4e3cdb503bdd513ade5238df5337e05536e15635e25734e35933e45a31e55c30e65d2fe75e2ee8602de9612bea632aeb6429eb6628ec6726ed6925ee6a24ef6c23ef6e21f06f20f1711ff1731df2741cf3761bf37819f47918f57b17f57d15f67e14f68013f78212f78410f8850ff8870ef8890cf98b0bf98c0af98e09fa9008fa9207fa9407fb9606fb9706fb9906fb9b06fb9d07fc9f07fca108fca309fca50afca60cfca80dfcaa0ffcac11fcae12fcb014fcb216fcb418fbb61afbb81dfbba1ffbbc21fbbe23fac026fac228fac42afac62df9c72ff9c932f9cb35f8cd37f8cf3af7d13df7d340f6d543f6d746f5d949f5db4cf4dd4ff4df53f4e156f3e35af3e55df2e661f2e865f2ea69f1ec6df1ed71f1ef75f1f179f2f27df2f482f3f586f3f68af4f88ef5f992f6fa96f8fb9af9fc9dfafda1fcffa4";
+const INFERNO = Uint8Array.from({ length: 768 }, (_, i) => parseInt(INFERNO_HEX.substr(i * 2, 2), 16));
 
-function corDoValor(t) {
-  const v = Math.min(Math.max(t, 0), 1) * (RAMPA.length - 1);
-  const i = Math.min(Math.max(Math.floor(v), 0), RAMPA.length - 2);
-  const f = v - i;
-  const a = RAMPA[i], b = RAMPA[i + 1];
-  return [0, 1, 2].map((k) => Math.round(a[k] + (b[k] - a[k]) * f));
-}
-
-function amostrar(mapa, x, y) {
-  const fx = Math.min(Math.max(x * (LADO_CAM - 1), 0), LADO_CAM - 1);
-  const fy = Math.min(Math.max(y * (LADO_CAM - 1), 0), LADO_CAM - 1);
-  const x0 = Math.floor(fx), y0 = Math.floor(fy);
-  const x1 = Math.min(x0 + 1, LADO_CAM - 1), y1 = Math.min(y0 + 1, LADO_CAM - 1);
-  const dx = fx - x0, dy = fy - y0;
-  const v00 = mapa[y0 * LADO_CAM + x0], v10 = mapa[y0 * LADO_CAM + x1];
-  const v01 = mapa[y1 * LADO_CAM + x0], v11 = mapa[y1 * LADO_CAM + x1];
-  return v00 * (1 - dx) * (1 - dy) + v10 * dx * (1 - dy) + v01 * (1 - dx) * dy + v11 * dx * dy;
-}
-
-export function desenharCampo(canvas, rgb) {
-  canvas.width = LADO;
-  canvas.height = LADO;
-  const dados = new ImageData(LADO, LADO);
-  for (let i = 0; i < LADO * LADO; i++) {
-    dados.data[i * 4] = rgb[i * 3];
-    dados.data[i * 4 + 1] = rgb[i * 3 + 1];
-    dados.data[i * 4 + 2] = rgb[i * 3 + 2];
-    dados.data[i * 4 + 3] = 255;
+/** Mapa 7x7 -> w x h, bilinear como cv2.resize (coordenadas de centro de pixel). */
+function ampliarMapa(mapa, w, h) {
+  const n = LADO_CAM;
+  const saida = new Float32Array(w * h);
+  const xs = new Int32Array(w), xs1 = new Int32Array(w), fx = new Float32Array(w);
+  for (let x = 0; x < w; x++) {
+    let f = (x + 0.5) * (n / w) - 0.5;
+    let i0 = Math.floor(f);
+    f -= i0;
+    if (i0 < 0) { f = 0; i0 = 0; }
+    if (i0 >= n - 1) { f = 0; i0 = n - 1; }
+    xs[x] = i0; xs1[x] = Math.min(i0 + 1, n - 1); fx[x] = f;
   }
-  canvas.getContext('2d').putImageData(dados, 0, 0);
-}
-
-export function desenharSobreposicao(canvas, rgb, cam, opacidade = 0.45) {
-  let maximo = 0;
-  for (const v of cam) if (v > maximo) maximo = v;
-  if (maximo <= 0) maximo = 1;
-  const norm = Float32Array.from(cam, (v) => Math.max(0, v) / maximo);
-
-  canvas.width = LADO;
-  canvas.height = LADO;
-  const dados = new ImageData(LADO, LADO);
-  for (let y = 0; y < LADO; y++) {
-    for (let x = 0; x < LADO; x++) {
-      const i = (y * LADO + x) * 3;
-      const intensidade = amostrar(norm, x / (LADO - 1), y / (LADO - 1));
-      const cor = corDoValor(intensidade);
-      const alfa = opacidade * intensidade;
-      const o = (y * LADO + x) * 4;
-      dados.data[o] = Math.round(rgb[i] * (1 - alfa) + cor[0] * alfa);
-      dados.data[o + 1] = Math.round(rgb[i + 1] * (1 - alfa) + cor[1] * alfa);
-      dados.data[o + 2] = Math.round(rgb[i + 2] * (1 - alfa) + cor[2] * alfa);
-      dados.data[o + 3] = 255;
+  for (let y = 0; y < h; y++) {
+    let g = (y + 0.5) * (n / h) - 0.5;
+    let j0 = Math.floor(g);
+    g -= j0;
+    if (j0 < 0) { g = 0; j0 = 0; }
+    if (j0 >= n - 1) { g = 0; j0 = n - 1; }
+    const j1 = Math.min(j0 + 1, n - 1);
+    for (let x = 0; x < w; x++) {
+      const a = mapa[j0 * n + xs[x]] * (1 - fx[x]) + mapa[j0 * n + xs1[x]] * fx[x];
+      const b = mapa[j1 * n + xs[x]] * (1 - fx[x]) + mapa[j1 * n + xs1[x]] * fx[x];
+      saida[y * w + x] = a * (1 - g) + b * g;
     }
   }
-  canvas.getContext('2d').putImageData(dados, 0, 0);
+  return saida;
+}
+
+/** Copia o campo original (canvas de exibição) para o canvas de destino. */
+export function desenharCampo(canvas, origem) {
+  canvas.width = origem.width;
+  canvas.height = origem.height;
+  canvas.getContext('2d').drawImage(origem, 0, 0);
+}
+
+/** Grad-CAM sobreposto: 0,6 · imagem + 0,4 · INFERNO(mapa), como no Streamlit. */
+export function desenharSobreposicao(canvas, origem, cam) {
+  const w = origem.width, h = origem.height;
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(origem, 0, 0);
+  const dados = ctx.getImageData(0, 0, w, h);
+  let maximo = 0;
+  for (const v of cam) if (v > maximo) maximo = v;
+  const norm = Float32Array.from(cam, (v) => (maximo > 0 ? Math.max(0, v) / maximo : 0));
+  const grande = ampliarMapa(norm, w, h);
+  const px = dados.data;
+  for (let i = 0; i < w * h; i++) {
+    const idx = Math.min(255, Math.floor(255 * grande[i])) * 3; // np.uint8(255 * mapa)
+    const o = i * 4;
+    px[o] = Math.round(px[o] * 0.6 + INFERNO[idx] * 0.4);
+    px[o + 1] = Math.round(px[o + 1] * 0.6 + INFERNO[idx + 1] * 0.4);
+    px[o + 2] = Math.round(px[o + 2] * 0.6 + INFERNO[idx + 2] * 0.4);
+  }
+  ctx.putImageData(dados, 0, 0);
 }

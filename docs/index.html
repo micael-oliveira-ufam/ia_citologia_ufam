@@ -3,81 +3,414 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Colo do Útero com IA — UFAM · SEMSA</title>
-  <meta name="description" content="Catálogo de lâminas de citopatologia e análise de campos de citologia em meio líquido com inteligência artificial, direto no navegador. Projeto acadêmico UFAM / SEMSA.">
+  <title>IA Citologia UFAM &amp; SEMSA | Citopatologia com Inteligência Artificial</title>
+  <script>document.documentElement.classList.add("js")</script>
+  <meta name="description" content="Plataforma de apoio ao diagnóstico citológico em meio líquido pelo Sistema Bethesda com inteligência artificial. Projeto da Faculdade de Ciências Farmacêuticas e do Instituto de Computação da UFAM em parceria com a SEMSA Manaus. Classificação de NILM, LSIL, HSIL e carcinoma escamoso com ConvNeXt e mapa de atenção Grad-CAM.">
+  <meta name="keywords" content="IA Citologia UFAM &amp; SEMSA, IA Citologia UFAM, Citopatologia SEMSA, Citopatologia IA, Citopatologia UFAM, Citopatologia FCF, Citopatologia ICOMP, citologia em meio líquido, citologia em meio líquido inteligência artificial, Sistema Bethesda, rastreio câncer do colo do útero, câncer cervical Amazonas, Papanicolaou inteligência artificial, ConvNeXt citologia, Grad-CAM citopatologia, IARC Digital Atlas, deep learning citopatologia, UFAM Faculdade de Ciências Farmacêuticas, Instituto de Computação UFAM, SEMSA Manaus, Laboratório Sebastião Marinho, saúde digital Amazonas, CitoPred">
+  <meta name="author" content="Universidade Federal do Amazonas">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://micael-oliveira-ufam.github.io/ia_citologia_ufam/">
+  <meta property="og:title" content="IA Citologia UFAM &amp; SEMSA | Citopatologia com Inteligência Artificial">
+  <meta property="og:description" content="Plataforma de apoio ao diagnóstico citológico em meio líquido pelo Sistema Bethesda com inteligência artificial. Projeto da Faculdade de Ciências Farmacêuticas e do Instituto de Computação da UFAM em parceria com a SEMSA Manaus. Classificação de NILM, LSIL, HSIL e carcinoma escamoso com ConvNeXt e mapa de atenção Grad-CAM.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:url" content="https://micael-oliveira-ufam.github.io/ia_citologia_ufam/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="IA Citologia UFAM &amp; SEMSA | Citopatologia com Inteligência Artificial">
+  <meta name="twitter:description" content="Plataforma de apoio ao diagnóstico citológico em meio líquido pelo Sistema Bethesda com inteligência artificial. Projeto da Faculdade de Ciências Farmacêuticas e do Instituto de Computação da UFAM em parceria com a SEMSA Manaus. Classificação de NILM, LSIL, HSIL e carcinoma escamoso com ConvNeXt e mapa de atenção Grad-CAM.">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "IA Citologia UFAM & SEMSA | Citopatologia com Inteligência Artificial", "alternateName": ["IA Citologia UFAM", "CitoPred"], "description": "Plataforma de apoio ao diagnóstico citológico em meio líquido pelo Sistema Bethesda com inteligência artificial. Projeto da Faculdade de Ciências Farmacêuticas e do Instituto de Computação da UFAM em parceria com a SEMSA Manaus. Classificação de NILM, LSIL, HSIL e carcinoma escamoso com ConvNeXt e mapa de atenção Grad-CAM.", "url": "https://micael-oliveira-ufam.github.io/ia_citologia_ufam/", "applicationCategory": "HealthApplication", "inLanguage": "pt-BR", "keywords": "IA Citologia UFAM & SEMSA, IA Citologia UFAM, Citopatologia SEMSA, Citopatologia IA, Citopatologia UFAM, Citopatologia FCF, Citopatologia ICOMP, citologia em meio líquido, citologia em meio líquido inteligência artificial, Sistema Bethesda, rastreio câncer do colo do útero, câncer cervical Amazonas, Papanicolaou inteligência artificial, ConvNeXt citologia, Grad-CAM citopatologia, IARC Digital Atlas, deep learning citopatologia, UFAM Faculdade de Ciências Farmacêuticas, Instituto de Computação UFAM, SEMSA Manaus, Laboratório Sebastião Marinho, saúde digital Amazonas, CitoPred", "isAccessibleForFree": true, "creator": [{"@type": "Person", "name": "Micael Davi Lima de Oliveira", "affiliation": "Iniciação Científica, Faculdade de Ciências Farmacêuticas, UFAM"}, {"@type": "Person", "name": "Prof. Dr. Toni Ricardo Martins", "affiliation": "Faculdade de Ciências Farmacêuticas, UFAM"}, {"@type": "Person", "name": "Profa. Dra. Fabíola Nakamura", "affiliation": "Instituto de Computação (IComp), UFAM"}, {"@type": "Person", "name": "Prof. Dr. Felipe Gomes de Oliveira", "affiliation": "Instituto de Computação (IComp), UFAM"}, {"@type": "Person", "name": "Dra. Ivanete", "affiliation": "SEMSA Manaus"}, {"@type": "Person", "name": "Dra. Carol", "affiliation": "SEMSA Manaus"}], "publisher": {"@type": "CollegeOrUniversity", "name": "Universidade Federal do Amazonas", "department": ["Faculdade de Ciências Farmacêuticas", "Instituto de Computação"]}, "about": ["Citopatologia", "Citologia em meio líquido", "Sistema Bethesda", "Rastreio do câncer do colo do útero", "Inteligência artificial"]}</script>
   <meta name="theme-color" content="#0e6b7b">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230e6b7b%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2714%27 font-family=%27sans-serif%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3ECU%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/site.css">
+  <link rel="preload" href="fontes/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/site.css?v=2">
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
-  <header class="topo">
-    <div class="topo__in">
-      <a class="marca" href="index.html">
-        <span class="marca__icone" aria-hidden="true">CU</span>
-        <span class="marca__nome">Colo do Útero com IA<span class="marca__sub">UFAM · SEMSA</span></span>
-      </a>
-      <nav class="menu" aria-label="Principal">
-        <a href="index.html" data-pagina="inicio">Início</a>
-        <a href="catalogo.html" data-pagina="catalogo">Catálogo</a>
-        <a href="predicao.html" data-pagina="predicao">Predição</a>
-      </nav>
+  <div class="pagina">
+
+<header class="cabecalho">
+  <div class="cab-linha">
+    <a class="cab-logo cab-logo--ufam" href="index.html" aria-label="Início"><img src="img/logo_ufam.png" alt="Universidade Federal do Amazonas" width="86"></a>
+    <div class="cab-titulo">
+      <div class="sobrancelha">UFAM · IComp · SEMSA Manaus</div>
+      <h1>Sistema de Apoio ao Diagnóstico Citológico</h1>
+      <p class="subtitulo">Citologia em meio líquido classificada pelo Sistema Bethesda, com ConvNeXt Large e mapa de atenção Grad-CAM.</p>
     </div>
-  </header>
-
-  <main id="conteudo">
-    <h1>Colo do Útero com IA</h1>
-    <p class="lead">
-      Dois módulos independentes para o trabalho com citologia cervical: consultar o acervo de
-      lâminas do laboratório e analisar um campo de citologia em meio líquido com um modelo de
-      inteligência artificial que roda no seu navegador.
-    </p>
-
-    <div class="modulos">
-      <article class="cartao modulo">
-        <span class="etiqueta">Módulo 1</span>
-        <h2>Catálogo de lâminas</h2>
-        <p>Acervo do CitoAtlas (Laboratório Profº Sebastião Marinho): imagens com zoom, ID, data e
-           número de avaliações. A avaliação é cega, então as classificações não aparecem.</p>
-        <a class="btn" href="catalogo.html">Abrir o catálogo</a>
-      </article>
-      <article class="cartao modulo">
-        <span class="etiqueta">Módulo 2</span>
-        <h2>Predição de citologia</h2>
-        <p>Envie a foto de um campo e veja a categoria de Bethesda mais provável (NILM, LSIL, HSIL,
-           SCC), as probabilidades e o mapa de calor. A imagem não sai do seu dispositivo.</p>
-        <a class="btn" href="predicao.html">Abrir a predição</a>
-      </article>
+    <div class="cab-logos">
+      <img src="img/logo-icomp.png" alt="Instituto de Computação, UFAM" height="52">
+      <img src="img/semsa.png" alt="Secretaria Municipal de Saúde de Manaus" height="52">
     </div>
+  </div>
+  <div class="creditos">
+    <div class="credito-bloco"><div class="credito-titulo">Desenvolvimento</div>
+      <div class="credito-nome">Micael Davi Lima de Oliveira</div><div class="credito-sub">Iniciação Científica · FCF/UFAM</div></div>
+    <div class="credito-bloco"><div class="credito-titulo">Coordenação</div>
+      <div class="credito-nome">Prof. Dr. Toni Ricardo Martins</div><div class="credito-sub">Faculdade de Ciências Farmacêuticas · UFAM</div></div>
+    <div class="credito-bloco"><div class="credito-titulo">Pesquisadores parceiros · IComp/UFAM</div>
+      <div class="credito-nome">Profa. Dra. Fabíola Nakamura<br>Prof. Dr. Felipe Gomes de Oliveira</div></div>
+    <div class="credito-bloco"><div class="credito-titulo">Validação clínica · SEMSA Manaus</div>
+      <div class="credito-nome">Dra. Ivanete · Dra. Carol</div><div class="credito-sub">Especialistas clínicas e citopatologistas</div></div>
+  </div>
+  <div class="faixa-etica" role="note">Ferramenta acadêmica em desenvolvimento. O modelo foi treinado <strong>exclusivamente com acervos públicos de imagens</strong>; nenhuma amostra de paciente do serviço foi utilizada. Por isso o projeto <strong>ainda não possui aprovação de Comitê de Ética em Pesquisa (CEP/CONEP)</strong> e <strong>não pode ser usado para decisão clínica, laudo ou triagem assistencial</strong>.</div>
+</header>
+<nav class="abas" aria-label="Seções do site"><a href="#analise" data-secao="analise" aria-current="page">Análise</a><a href="#bethesda" data-secao="bethesda">Sistema Bethesda</a><a href="#validacao" data-secao="validacao">Validação do algoritmo</a><a href="#exemplos" data-secao="exemplos">Imagens de teste</a><a href="#equipe" data-secao="equipe">Equipe e parcerias</a><a href="#dados" data-secao="dados">Dados e créditos</a><a href="catalogo.html" data-secao="catalogo">Catálogo de lâminas</a></nav>
+    <main id="conteudo" tabindex="-1">
 
-    <section class="cartao pilha" aria-labelledby="app">
-      <h2 id="app">Aplicativo para Android e iOS</h2>
-      <p>
-        O mesmo conteúdo, mais a parte de conscientização e prevenção para pacientes e a
-        estimativa educativa de risco, está no aplicativo <strong>Colo do Útero IA</strong>.
-        Ao abrir, a pessoa escolhe se é paciente ou profissional de saúde. O catálogo e a
-        predição aparecem no modo profissional.
-      </p>
-      <p><a data-repo="/releases" href="#">Baixar o aplicativo (página de versões no GitHub)</a></p>
-    </section>
-
-    <div class="aviso" style="margin-top:16px">
-      <strong>Uso acadêmico.</strong> O modelo de citologia foi treinado apenas com o conjunto
-      público IARC Digital Atlas, sem aprovação de Comitê de Ética. Não emite laudo, não substitui
-      o citopatologista e não deve receber imagens de pacientes.
+<section id="analise" class="secao" data-secao-conteudo aria-labelledby="h-analise">
+  <h2 id="h-analise" class="titulo-secao">Análise de campo citológico</h2>
+  <div class="colunas colunas--entrada">
+    <div>
+      <div class="zona" id="zona">
+        <img class="zona__previa" id="previa-mini" alt="" hidden>
+        <p class="zona__rotulo"><strong>Carregue a lâmina digitalizada</strong></p>
+        <p class="pequeno">Arraste uma imagem para cá ou escolha abaixo. Um campo digitalizado por vez. <strong>Não envie imagens de pacientes.</strong></p>
+        <div class="botoes">
+          <label class="btn" for="arquivo">Escolher imagem</label>
+          <label class="btn btn--sec" for="camera">Usar a câmera</label>
+        </div>
+        <input class="so-leitor" type="file" id="arquivo" accept="image/*">
+        <input class="so-leitor" type="file" id="camera" accept="image/*" capture="environment">
+      </div>
     </div>
-  </main>
-
-  <footer class="rodape">
-    <div class="rodape__in">
-      <p>Desenvolvido por Micael Davi Lima de Oliveira, sob orientação do Prof. Dr. Toni Ricardo Martins
-         (FCF / UFAM). Parceria SEMSA Manaus e IComp/UFAM.</p>
-      <p><a data-repo="" href="#">Código-fonte no GitHub</a></p>
+    <div class="pilha">
+      <label class="caixa-marcar">
+        <input type="checkbox" id="robustez" checked>
+        <span><strong>Verificar robustez nas oito orientações</strong>
+          <span class="pequeno bloco">Analisa o campo girado e espelhado. Revela se a rede muda de opinião só por causa da orientação. Deixa a análise mais lenta.</span></span>
+      </label>
+      <p class="pequeno">Sem uma imagem própria? A seção <a href="#exemplos" data-ir="exemplos"><strong>Imagens de teste</strong></a> traz campos do IARC prontos para analisar.</p>
+      <div id="modelo-estado" class="modelo-estado">
+        <p id="modelo-msg" class="pequeno" role="status" aria-live="polite">Consultando o modelo publicado…</p>
+        <progress id="modelo-prog" max="100" hidden aria-label="Progresso do download do modelo"></progress>
+        <button class="btn btn--sec btn--mini" id="modelo-remover" type="button" hidden>Remover o modelo deste navegador</button>
+      </div>
     </div>
-  </footer>
-  <script type="module">
-    import { iniciarPagina } from './js/comum.js';
-    iniciarPagina('inicio');
-  </script>
+  </div>
+  <hr>
+  <div id="painel-imagem" class="colunas colunas--imagem" hidden>
+    <figure class="figura"><img id="previa" alt=""><figcaption id="previa-legenda"></figcaption></figure>
+    <div class="pilha">
+      <h3>Lâmina carregada</h3>
+      <p id="previa-dim"></p>
+      <p class="pequeno" id="previa-desc" hidden></p>
+      <p class="pequeno" id="previa-ref" hidden></p>
+      <div class="botoes botoes--linha">
+        <button class="btn btn--grande" id="analisar" type="button">Executar análise citológica</button>
+        <button class="btn btn--sec" id="limpar" type="button">Limpar</button>
+      </div>
+      <progress id="analise-prog" max="8" hidden aria-label="Progresso da análise"></progress>
+      <p class="pequeno" id="analise-msg" role="status" aria-live="polite" hidden></p>
+    </div>
+  </div>
+  <div id="resultado" aria-live="polite" hidden></div>
+  <div id="boas-vindas">
+    <hr>
+    <h2 class="titulo-secao">Como funciona</h2>
+    <div class="grade-3"><div class="cartao"><div class="sobrancelha">Passo 1</div><b>Carregue um campo</b><br><span class="fraco">Use o seletor acima ou abra uma das imagens de teste.</span></div><div class="cartao"><div class="sobrancelha">Passo 2</div><b>Execute a análise</b><br><span class="fraco">A rede classifica a imagem nas quatro categorias do Sistema Bethesda.</span></div><div class="cartao"><div class="sobrancelha">Passo 3</div><b>Leia o mapa de atenção</b><br><span class="fraco">O Grad-CAM mostra quais regiões pesaram na decisão.</span></div></div>
+    <h2 class="titulo-secao espaco">Escala de gravidade do Sistema Bethesda</h2>
+    <div class="regua" role="img" aria-label="Escala de gravidade do Sistema Bethesda, de NILM a SCC"><div class="degrau" data-sigla="NILM" style="border-color:#2E7D62"><div class="sigla" style="color:#2E7D62">NILM</div><div class="desc">Negativo para lesão intraepitelial ou malignidade</div></div><div class="degrau" data-sigla="LSIL" style="border-color:#C08A1E"><div class="sigla" style="color:#C08A1E">LSIL</div><div class="desc">Lesão intraepitelial escamosa de baixo grau</div></div><div class="degrau" data-sigla="HSIL" style="border-color:#D9642E"><div class="sigla" style="color:#D9642E">HSIL</div><div class="desc">Lesão intraepitelial escamosa de alto grau</div></div><div class="degrau" data-sigla="SCC" style="border-color:#B23A3A"><div class="sigla" style="color:#B23A3A">SCC</div><div class="desc">Carcinoma de células escamosas</div></div></div><p class="legenda">Gravidade crescente da esquerda para a direita.</p>
+    <p class="legenda">A seção <a href="#bethesda" data-ir="bethesda"><strong>Sistema Bethesda</strong></a> explica cada categoria em detalhe: o que significa, o que se vê ao microscópio e que conduta costuma decorrer dela.</p>
+    <div class="colunas colunas--duas espaco">
+      <div>
+        <h3>Por que rastrear</h3>
+        <p>O câncer do colo do útero é dos mais evitáveis, e ainda assim segue entre as principais causas de morte por câncer em mulheres no Amazonas. A citologia em meio líquido detecta lesões precursoras anos antes da malignização. O gargalo está no volume de lâminas por citopatologista. Uma triagem automatizada pode ordenar a fila, colocando os casos suspeitos na frente.</p>
+      </div>
+      <div>
+        <h3>Como o modelo foi treinado</h3>
+        <p>ConvNeXt Large com <em>transfer learning</em> a partir do ImageNet, ajustado em dois conjuntos públicos de citologia em meio líquido. Aumentos aplicados no treino:</p>
+        <div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Transformação</th><th>Motivo</th></tr></thead><tbody><tr><td><code>Resize(224, 224)</code></td><td>Padroniza a entrada da rede</td></tr><tr><td><code>HorizontalFlip(p=0.5)</code></td><td>A lâmina não tem orientação preferencial</td></tr><tr><td><code>VerticalFlip(p=0.5)</code></td><td>Idem, no eixo vertical</td></tr><tr><td><code>RandomRotate90(p=0.5)</code></td><td>Rotações múltiplas de 90°</td></tr><tr><td><code>ColorJitter(0.2, 0.2, 0.2, hue=0.1, p=0.3)</code></td><td>Variação de coloração entre lotes</td></tr><tr><td><code>Normalize(ImageNet)</code></td><td>Estatísticas do pré-treino</td></tr><tr><td><code>ToTensorV2()</code></td><td>Conversão para tensor</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="bethesda" class="secao" data-secao-conteudo aria-labelledby="h-bethesda">
+  <h2 id="h-bethesda" class="titulo-secao">O que é o Sistema Bethesda</h2>
+  <div class="colunas colunas--texto">
+    <div class="prosa"><p>O Sistema Bethesda é a linguagem padronizada para relatar exames citopatológicos do colo do útero. Foi criado em 1988, nos Estados Unidos, e revisado em 1991, 2001 e 2014. Antes dele, cada laboratório usava a classificação de Papanicolaou em cinco classes numéricas, que dizia pouco sobre a conduta a tomar e variava de serviço para serviço.</p><p>A mudança central foi abandonar números e adotar categorias que se traduzem diretamente em decisão clínica. O laudo passou a informar também se a amostra era adequada para leitura. Uma lâmina com material escasso ou obscurecido por sangue não é um resultado negativo, é uma lâmina que precisa ser repetida.</p><p>As quatro categorias abaixo são as que este modelo classifica. Elas formam uma escala ordinal: da ausência de lesão até o carcinoma invasor. Essa ordem importa na leitura dos erros do algoritmo, porque confundir categorias vizinhas tem consequência clínica diferente de confundir categorias distantes.</p></div>
+    <div class="pilha">
+      <div class="cartao"><div class="sobrancelha">Em uma frase</div>
+        <p class="fraco corpo-cartao">Um vocabulário comum que transforma o que se vê ao microscópio numa categoria que orienta conduta clínica, e permite comparar resultados entre laboratórios, cidades e países.</p></div>
+      <div class="cartao"><div class="sobrancelha">Por que a ordem importa</div>
+        <p class="fraco corpo-cartao">As categorias formam uma escala. Um erro entre vizinhas costuma adiar um seguimento; um erro entre extremos pode perder um câncer. É por isso que a matriz de confusão diz mais que a acurácia isolada.</p></div>
+    </div>
+  </div>
+  <div class="regua" role="img" aria-label="Escala de gravidade do Sistema Bethesda, de NILM a SCC"><div class="degrau" data-sigla="NILM" style="border-color:#2E7D62"><div class="sigla" style="color:#2E7D62">NILM</div><div class="desc">Negativo para lesão intraepitelial ou malignidade</div></div><div class="degrau" data-sigla="LSIL" style="border-color:#C08A1E"><div class="sigla" style="color:#C08A1E">LSIL</div><div class="desc">Lesão intraepitelial escamosa de baixo grau</div></div><div class="degrau" data-sigla="HSIL" style="border-color:#D9642E"><div class="sigla" style="color:#D9642E">HSIL</div><div class="desc">Lesão intraepitelial escamosa de alto grau</div></div><div class="degrau" data-sigla="SCC" style="border-color:#B23A3A"><div class="sigla" style="color:#B23A3A">SCC</div><div class="desc">Carcinoma de células escamosas</div></div></div><p class="legenda">Gravidade crescente da esquerda para a direita.</p>
+  <hr>
+  <h2 class="titulo-secao">As quatro categorias em detalhe</h2>
+  <p class="legenda">Cada bloco reúne o que a categoria significa, o que se vê ao microscópio e o que costuma decorrer dela em termos de conduta.</p>
+  
+    <article class="categoria">
+      <div class="cartao" style="border-left:5px solid #2E7D62">
+        <div class="cat-sigla" style="color:#2E7D62">NILM</div>
+        <div class="cat-nome">Negativo para lesão intraepitelial ou malignidade</div>
+        <div class="cat-trad">Negative for Intraepithelial Lesion or Malignancy</div>
+      </div>
+      <div class="grade-3 grade-3--texto">
+        <div><h4>O que significa</h4><p class="fraco">Categoria de normalidade. O material é adequado e não há células com alterações sugestivas de lesão precursora ou de câncer. Não significa ausência de qualquer achado: infecções, alterações reativas por inflamação, atrofia ou uso de DIU são relatadas dentro de NILM.</p></div>
+        <div><h4>O que se vê ao microscópio</h4><p class="fraco">Células escamosas superficiais e intermediárias com núcleos pequenos, regulares e cromatina fina. Relação núcleo/citoplasma baixa. Células endocervicais colunares preservadas, em paliçada ou favo de mel.</p></div>
+        <div><h4>Conduta habitual</h4><p class="fraco">Retorno ao rastreio de rotina, no intervalo previsto pelo programa. Achados infecciosos ou reativos podem motivar tratamento próprio, sem mudar a conduta de rastreio.</p><p class="legenda">É o resultado da grande maioria dos exames de rastreio.</p></div>
+      </div>
+      <hr>
+    </article>
+    <article class="categoria">
+      <div class="cartao" style="border-left:5px solid #C08A1E">
+        <div class="cat-sigla" style="color:#C08A1E">LSIL</div>
+        <div class="cat-nome">Lesão intraepitelial escamosa de baixo grau</div>
+        <div class="cat-trad">Low-grade Squamous Intraepithelial Lesion</div>
+      </div>
+      <div class="grade-3 grade-3--texto">
+        <div><h4>O que significa</h4><p class="fraco">Reúne o efeito citopático do HPV (coilocitose) e a neoplasia intraepitelial cervical de grau 1 (NIC 1). Representa infecção produtiva pelo vírus, e não ainda uma lesão com autonomia proliferativa.</p></div>
+        <div><h4>O que se vê ao microscópio</h4><p class="fraco">Células escamosas maduras com núcleos aumentados, mais de três vezes o núcleo de uma célula intermediária normal, hipercromáticos e de contorno irregular. O achado mais característico é o coilócito: halo perinuclear amplo e bem delimitado, com borda citoplasmática densa.</p></div>
+        <div><h4>Conduta habitual</h4><p class="fraco">Seguimento citológico ou colposcopia, conforme a idade e o protocolo vigente. A maioria das lesões regride espontaneamente em até dois anos, sobretudo em mulheres jovens.</p><p class="legenda">A alteração mais comum entre os exames alterados.</p></div>
+      </div>
+      <hr>
+    </article>
+    <article class="categoria">
+      <div class="cartao" style="border-left:5px solid #D9642E">
+        <div class="cat-sigla" style="color:#D9642E">HSIL</div>
+        <div class="cat-nome">Lesão intraepitelial escamosa de alto grau</div>
+        <div class="cat-trad">High-grade Squamous Intraepithelial Lesion</div>
+      </div>
+      <div class="grade-3 grade-3--texto">
+        <div><h4>O que significa</h4><p class="fraco">Agrupa NIC 2 e NIC 3, incluindo o carcinoma in situ. É a verdadeira lesão precursora: há proliferação de células imaturas com potencial real de progressão para carcinoma invasor se não tratada.</p></div>
+        <div><h4>O que se vê ao microscópio</h4><p class="fraco">Células menores e imaturas, isoladas ou em agregados sinciciais, com relação núcleo/citoplasma alta, com o núcleo ocupando a maior parte da célula. Cromatina grosseira e irregularmente distribuída, contornos nucleares recortados, citoplasma escasso e frequentemente basofílico.</p></div>
+        <div><h4>Conduta habitual</h4><p class="fraco">Encaminhamento para colposcopia com biópsia dirigida, e tratamento excisional quando confirmada. É a categoria que o rastreio existe para encontrar.</p><p class="legenda">Menos frequente que LSIL, com impacto clínico bem maior.</p></div>
+      </div>
+      <hr>
+    </article>
+    <article class="categoria">
+      <div class="cartao" style="border-left:5px solid #B23A3A">
+        <div class="cat-sigla" style="color:#B23A3A">SCC</div>
+        <div class="cat-nome">Carcinoma de células escamosas</div>
+        <div class="cat-trad">Squamous Cell Carcinoma</div>
+      </div>
+      <div class="grade-3 grade-3--texto">
+        <div><h4>O que significa</h4><p class="fraco">Carcinoma invasor de células escamosas: a neoplasia rompeu a membrana basal e invadiu o estroma. Não é mais lesão precursora, e sim câncer estabelecido.</p></div>
+        <div><h4>O que se vê ao microscópio</h4><p class="fraco">Acentuado pleomorfismo celular e nuclear, nucléolos evidentes, cromatina irregular e grumosa. Podem aparecer células queratinizadas de formas bizarras: fusiformes, em girino, em fibra. O fundo costuma trazer a chamada diátese tumoral: sangue, debris necróticos e material proteináceo granular.</p></div>
+        <div><h4>Conduta habitual</h4><p class="fraco">Encaminhamento imediato para confirmação histopatológica e estadiamento. Prioridade máxima na fila.</p><p class="legenda">Raro no rastreio organizado, e é justamente esse o objetivo.</p></div>
+      </div>
+      <hr>
+    </article>
+  <h2 class="titulo-secao">O que este modelo não classifica</h2>
+  <div class="prosa"><p>O Sistema Bethesda completo é mais amplo que estas quatro categorias. Um laudo real também pode registrar:</p><ul><li><strong>ASC-US</strong>: atipias em células escamosas de significado indeterminado, quando as alterações existem mas não bastam para caracterizar LSIL.</li><li><strong>ASC-H</strong>: atipias escamosas em que não se pode excluir lesão de alto grau.</li><li><strong>AGC</strong>: atipias em células glandulares, de origem endocervical ou endometrial.</li><li><strong>AIS</strong>: adenocarcinoma in situ.</li><li><strong>Adenocarcinoma</strong>: de origem endocervical, endometrial ou extrauterina.</li><li><strong>Avaliação da adequabilidade</strong>: satisfatória ou insatisfatória para análise.</li></ul><p>Este modelo <strong>não</strong> classifica essas categorias: foi treinado apenas nas quatro acima. Um campo com atipia glandular ou com material insatisfatório será forçosamente encaixado numa das quatro classes conhecidas, com confiança que pode ser alta e ainda assim errada. É uma limitação de escopo, não um defeito de treinamento, e uma das razões pelas quais a leitura humana continua indispensável.</p></div>
+  <div class="aviso aviso--info">As descrições acima são material didático desta plataforma. Não substituem as definições oficiais do Sistema Bethesda nem as diretrizes do Ministério da Saúde e do INCA para conduta clínica.</div>
+</section>
+
+<section id="validacao" class="secao" data-secao-conteudo aria-labelledby="h-validacao">
+  <h2 id="h-validacao" class="titulo-secao">Validação do algoritmo</h2>
+  <p class="legenda">Validação cruzada estratificada, 5 folds · IARC Digital Atlas e Liquid Based Cytology Pap Smear (Mendeley Data) · arquitetura: <code>ConvNeXt Large</code></p>
+  <p>O modelo foi avaliado por validação cruzada estratificada em cinco partições, somando <strong>1.096 imagens</strong>. Cada imagem foi classificada exatamente uma vez, por um modelo que não a viu no treino. É um protocolo mais exigente que uma única divisão treino/validação, porque toda a base entra na avaliação e o resultado não depende do sorteio de uma partição específica.</p>
+  <div class="grade-4 espaco">
+    <div class="cartao"><div class="rotulo-numero">Acurácia global</div><div class="numero" style="color:#0E6B7B">98,18%</div><div class="nota-numero">IC 95%: 97,2% – 98,8%</div></div>
+    <div class="cartao"><div class="rotulo-numero">F1 macro</div><div class="numero">97,17%</div></div>
+    <div class="cartao"><div class="rotulo-numero">Precisão macro</div><div class="numero">97,98%</div></div>
+    <div class="cartao"><div class="rotulo-numero">Recall macro</div><div class="numero">96,47%</div></div>
+  </div>
+  <div class="grade-3 espaco">
+    <div class="cartao"><div class="rotulo-numero">Kappa de Cohen</div><div class="numero">0,9694</div><div class="nota-numero">Concordância além do acaso</div></div>
+    <div class="cartao"><div class="rotulo-numero">Imagens avaliadas</div><div class="numero">1.096</div><div class="nota-numero">1.076 classificações corretas</div></div>
+    <div class="cartao"><div class="rotulo-numero">Erros</div><div class="numero">20</div><div class="nota-numero">Nenhum deles subestimou um caso grave</div></div>
+  </div>
+  <hr>
+  <h3>Matriz de confusão global</h3>
+  <div class="colunas colunas--texto">
+    <div class="matriz-caixa"><table class="matriz">
+<caption class="so-leitor">Matriz de confusão global: linhas são a referência do citopatologista, colunas a predição da IA.</caption>
+<thead><tr><td class="canto"></td><th colspan="4" class="eixo">Predito pela IA</th></tr><tr><td class="canto"></td><th scope="col">NILM</th><th scope="col">LSIL</th><th scope="col">HSIL</th><th scope="col">SCC</th></tr></thead>
+<tbody><tr><th scope="row">NILM</th><td style="background:rgb(8,49,109);color:#fff"><b>634</b><span>100%</span></td><td style="background:rgb(247,251,255);color:#14232F"><b>0</b><span>0%</span></td><td style="background:rgb(246,250,255);color:#14232F"><b>3</b><span>0%</span></td><td style="background:rgb(247,251,255);color:#14232F"><b>0</b><span>0%</span></td></tr><tr><th scope="row">LSIL</th><td style="background:rgb(239,246,252);color:#14232F"><b>6</b><span>4%</span></td><td style="background:rgb(8,61,127);color:#fff"><b>139</b><span>95%</span></td><td style="background:rgb(245,249,254);color:#14232F"><b>2</b><span>1%</span></td><td style="background:rgb(247,251,255);color:#14232F"><b>0</b><span>0%</span></td></tr><tr><th scope="row">HSIL</th><td style="background:rgb(247,251,255);color:#14232F"><b>0</b><span>0%</span></td><td style="background:rgb(246,250,255);color:#14232F"><b>1</b><span>0%</span></td><td style="background:rgb(8,50,110);color:#fff"><b>214</b><span>99%</span></td><td style="background:rgb(246,250,255);color:#14232F"><b>1</b><span>0%</span></td></tr><tr><th scope="row">SCC</th><td style="background:rgb(247,251,255);color:#14232F"><b>0</b><span>0%</span></td><td style="background:rgb(247,251,255);color:#14232F"><b>0</b><span>0%</span></td><td style="background:rgb(233,242,250);color:#14232F"><b>7</b><span>7%</span></td><td style="background:rgb(8,67,135);color:#fff"><b>89</b><span>93%</span></td></tr></tbody></table>
+<p class="eixo-y">Referência (citopatologista) ↑ linhas</p></div>
+    <div class="prosa">
+      <p>Cada linha é a classe de referência e cada coluna, a decisão da rede. A diagonal são os acertos.</p>
+      <p><strong>O que mais importa não é o total de erros, é a direção deles.</strong> Numa ferramenta de triagem, confundir LSIL com NILM adia um seguimento; confundir carcinoma com NILM perde um caso.</p>
+      <p>Nesta validação, <strong>nenhuma das 312 imagens de HSIL ou carcinoma foi classificada como normal</strong>. O erro mais frequente foi o oposto, sete carcinomas lidos como HSIL, o que mantém a paciente na via de investigação. Seis campos de LSIL foram para NILM: é o achado que merece mais atenção, porque adia o seguimento.</p>
+    </div>
+  </div>
+  <details class="expansor"><summary>Figura original do experimento</summary>
+    <img src="img/matriz_confusao.png" alt="Matriz de confusão original do experimento, com rótulos Carcinoma, HSIL, LSIL e Normal" loading="lazy">
+    <p class="legenda">Rótulos como saíram do treinamento: Carcinoma, HSIL, LSIL, Normal. Ordem alfabética das pastas, que é a mesma dos índices do modelo.</p></details>
+  <hr>
+  <h3>Desempenho por classe</h3>
+  <div class="tabela-rolagem"><table class="tabela"><thead><tr><th>Classe</th><th>Descrição</th><th>Precisão</th><th>Recall (sensibilidade)</th><th>F1</th><th>Imagens</th></tr></thead><tbody><tr><td><b style="color:#2E7D62">NILM</b></td><td>Negativo para lesão intraepitelial ou malignidade</td><td>99,1%</td><td>99,5%</td><td>99,3%</td><td>637</td></tr><tr><td><b style="color:#C08A1E">LSIL</b></td><td>Lesão intraepitelial escamosa de baixo grau</td><td>99,3%</td><td>94,6%</td><td>96,9%</td><td>147</td></tr><tr><td><b style="color:#D9642E">HSIL</b></td><td>Lesão intraepitelial escamosa de alto grau</td><td>94,7%</td><td>99,1%</td><td>96,8%</td><td>216</td></tr><tr><td><b style="color:#B23A3A">SCC</b></td><td>Carcinoma de células escamosas</td><td>98,9%</td><td>92,7%</td><td>95,7%</td><td>96</td></tr></tbody></table></div>
+  <p class="legenda">Em rastreio, o recall de HSIL e SCC é a métrica decisiva: mede quantos casos graves escapariam. HSIL alcançou 99,1% e carcinoma 92,7%, e as sete imagens de carcinoma não reconhecidas foram classificadas como HSIL, ou seja, permaneceram sinalizadas como alteração de alto grau.</p>
+  <hr>
+  <h3>Curvas de treinamento</h3>
+  <img class="figura-larga" src="img/historico_treinamento.png" alt="Curvas de acurácia e perda de treino e validação por época" loading="lazy">
+  <p class="legenda">A acurácia de treino satura cedo e a de validação oscila, comportamento esperado num conjunto curado. O checkpoint publicado corresponde ao melhor ponto de validação, não à última época.</p>
+  <hr>
+  <h3>O que estes números ainda não dizem</h3>
+  <ul class="prosa">
+    <li>A validação é <strong>interna aos dois conjuntos públicos usados no treino</strong>. Desempenho em lâminas do Laboratório Sebastião Marinho, com outro scanner, outra coloração e outra prevalência, ainda não foi medido. É justamente o objeto da parceria com a SEMSA Manaus.</li>
+    <li>A prevalência aqui não é a de um programa de rastreio. No acervo, 42% dos campos são alterados; na rotina, a proporção de exames alterados é bem menor. O valor preditivo positivo em campo será menor que a precisão medida.</li>
+    <li>Métricas por imagem não equivalem a métricas por lâmina ou por paciente. Uma lâmina tem centenas de campos, e a decisão clínica é sobre a lâmina.</li>
+    <li>O modelo só conhece quatro categorias. Atipias de significado indeterminado (ASC-US, ASC-H), lesões glandulares (AGC, AIS) e amostras insatisfatórias não têm classe própria e serão forçadas para uma das quatro.</li>
+    <li>Não há comparação com dupla leitura humana, que é o padrão de referência real.</li>
+    <li>Sem aprovação de CEP, nenhum dado de paciente pode ser processado nesta ferramenta.</li>
+  </ul>
+</section>
+
+<section id="exemplos" class="secao" data-secao-conteudo aria-labelledby="h-exemplos">
+  <h2 id="h-exemplos" class="titulo-secao">Imagens de teste</h2>
+  <p>Campos do IARC Digital Atlas que acompanham a plataforma. Clique em <strong>Analisar</strong> para enviá-los direto ao modelo: a navegação salta para a seção Análise e o resultado aparece assim que o modelo estiver pronto.</p>
+  <div class="grade-2 espaco">
+    <article class="exemplo">
+      <img src="exemplos/cyto5940.jpg" alt="Ectocérvice normal: Ectocérvice normal: células escamosas intermediárias e superficiais, basofílicas ou eosinofílicas. Presença de alguns polimorfonucleares. (obj. 10x)" loading="lazy">
+      <span class="etiqueta" style="background:#2E7D621A;color:#2E7D62">NILM · referência do atlas</span>
+      <p class="exemplo-titulo"><strong>Ectocérvice normal</strong> · <code>cyto5940.jpg</code></p>
+      <p class="legenda">Ectocérvice normal: células escamosas intermediárias e superficiais, basofílicas ou eosinofílicas. Presença de alguns polimorfonucleares. (obj. 10x)</p>
+      <div class="botoes botoes--linha">
+        <button class="btn" type="button" data-analisar="cyto5940.jpg">Analisar</button>
+        <a class="btn btn--sec" href="exemplos/cyto5940.jpg" download="cyto5940.jpg">Baixar</a>
+      </div>
+    </article>
+    <article class="exemplo">
+      <img src="exemplos/cyt14686a.jpg" alt="Carcinoma invasivo: Carcinoma de células escamosas invasivo: agrupamento de células malignas pleomórficas, predominantemente pouco diferenciadas, e células isoladas mais diferenciadas, necróticas ou queratinizadas, com formas anômalas (elipses). Inflamação, sangue e necrose ao fundo. (obj. 20x)" loading="lazy">
+      <span class="etiqueta" style="background:#B23A3A1A;color:#B23A3A">SCC · referência do atlas</span>
+      <p class="exemplo-titulo"><strong>Carcinoma invasivo</strong> · <code>cyt14686a.jpg</code></p>
+      <p class="legenda">Carcinoma de células escamosas invasivo: agrupamento de células malignas pleomórficas, predominantemente pouco diferenciadas, e células isoladas mais diferenciadas, necróticas ou queratinizadas, com formas anômalas (elipses). Inflamação, sangue e necrose ao fundo. (obj. 20x)</p>
+      <div class="botoes botoes--linha">
+        <button class="btn" type="button" data-analisar="cyt14686a.jpg">Analisar</button>
+        <a class="btn btn--sec" href="exemplos/cyt14686a.jpg" download="cyt14686a.jpg">Baixar</a>
+      </div>
+    </article>
+    <article class="exemplo">
+      <img src="exemplos/cyto5950.jpg" alt="Campo adicional 1: Escamosas maduras, núcleos pequenos, flora bacilar." loading="lazy">
+      
+      <p class="exemplo-titulo"><strong>Campo adicional 1</strong> · <code>cyto5950.jpg</code></p>
+      <p class="legenda">Escamosas maduras, núcleos pequenos, flora bacilar.</p>
+      <div class="botoes botoes--linha">
+        <button class="btn" type="button" data-analisar="cyto5950.jpg">Analisar</button>
+        <a class="btn btn--sec" href="exemplos/cyto5950.jpg" download="cyto5950.jpg">Baixar</a>
+      </div>
+    </article>
+    <article class="exemplo">
+      <img src="exemplos/cyto2870.jpg" alt="Campo adicional 2: Colunares endocervicais em paliçada, fundo inflamatório." loading="lazy">
+      
+      <p class="exemplo-titulo"><strong>Campo adicional 2</strong> · <code>cyto2870.jpg</code></p>
+      <p class="legenda">Colunares endocervicais em paliçada, fundo inflamatório.</p>
+      <div class="botoes botoes--linha">
+        <button class="btn" type="button" data-analisar="cyto2870.jpg">Analisar</button>
+        <a class="btn btn--sec" href="exemplos/cyto2870.jpg" download="cyto2870.jpg">Baixar</a>
+      </div>
+    </article>
+    <article class="exemplo">
+      <img src="exemplos/cyt10131a.jpg" alt="Campo adicional 3: Halos perinucleares indicados por setas, exsudato abundante." loading="lazy">
+      
+      <p class="exemplo-titulo"><strong>Campo adicional 3</strong> · <code>cyt10131a.jpg</code></p>
+      <p class="legenda">Halos perinucleares indicados por setas, exsudato abundante.</p>
+      <div class="botoes botoes--linha">
+        <button class="btn" type="button" data-analisar="cyt10131a.jpg">Analisar</button>
+        <a class="btn btn--sec" href="exemplos/cyt10131a.jpg" download="cyt10131a.jpg">Baixar</a>
+      </div>
+    </article>
+    <article class="exemplo">
+      <img src="exemplos/cyt16243.jpg" alt="Campo adicional 4: Agrupamentos densos, alta relação núcleo/citoplasma." loading="lazy">
+      
+      <p class="exemplo-titulo"><strong>Campo adicional 4</strong> · <code>cyt16243.jpg</code></p>
+      <p class="legenda">Agrupamentos densos, alta relação núcleo/citoplasma.</p>
+      <div class="botoes botoes--linha">
+        <button class="btn" type="button" data-analisar="cyt16243.jpg">Analisar</button>
+        <a class="btn btn--sec" href="exemplos/cyt16243.jpg" download="cyt16243.jpg">Baixar</a>
+      </div>
+    </article></div>
+</section>
+
+<section id="equipe" class="secao" data-secao-conteudo aria-labelledby="h-equipe">
+  <h2 id="h-equipe" class="titulo-secao">Equipe</h2>
+  <div class="grade-2"><div class="pessoa"><div class="nome">Micael Davi Lima de Oliveira</div><div class="papel">Desenvolvimento do modelo e das aplicações</div><div class="vinculo">Iniciação Científica, Faculdade de Ciências Farmacêuticas, UFAM</div></div><div class="pessoa"><div class="nome">Prof. Dr. Toni Ricardo Martins</div><div class="papel">Coordenação e orientação</div><div class="vinculo">Faculdade de Ciências Farmacêuticas, UFAM</div></div><div class="pessoa"><div class="nome">Profa. Dra. Fabíola Nakamura</div><div class="papel">Pesquisadora parceira em computação</div><div class="vinculo">Instituto de Computação (IComp), UFAM</div></div><div class="pessoa"><div class="nome">Prof. Dr. Felipe Gomes de Oliveira</div><div class="papel">Pesquisador parceiro em computação</div><div class="vinculo">Instituto de Computação (IComp), UFAM</div></div><div class="pessoa"><div class="nome">Dra. Ivanete</div><div class="papel">Especialista clínica e citopatologista</div><div class="vinculo">SEMSA Manaus</div></div><div class="pessoa"><div class="nome">Dra. Carol</div><div class="papel">Especialista clínica e citopatologista</div><div class="vinculo">SEMSA Manaus</div></div></div>
+  <hr>
+  <h2 class="titulo-secao">Instituições parceiras</h2>
+  
+    <div class="inst">
+      <img src="img/logo_ufam.png" alt="Logotipo UFAM / FCF" loading="lazy">
+      <div class="cartao"><span class="etiqueta">UFAM / FCF</span>
+        <div class="inst-nome">Faculdade de Ciências Farmacêuticas, Universidade Federal do Amazonas</div><div class="fraco">Instituição executora. Concepção, treinamento e validação do modelo.</div></div>
+    </div>
+    <div class="inst">
+      <img src="img/logo-icomp.png" alt="Logotipo UFAM / IComp" loading="lazy">
+      <div class="cartao"><span class="etiqueta">UFAM / IComp</span>
+        <div class="inst-nome">Instituto de Computação, Universidade Federal do Amazonas</div><div class="fraco">Parceria em visão computacional e aprendizado profundo, com os professores pesquisadores Dra. Fabíola Nakamura e Dr. Felipe Gomes de Oliveira.</div></div>
+    </div>
+    <div class="inst">
+      <img src="img/semsa.png" alt="Logotipo SEMSA Manaus" loading="lazy">
+      <div class="cartao"><span class="etiqueta">SEMSA Manaus</span>
+        <div class="inst-nome">Secretaria Municipal de Saúde de Manaus, Laboratório Sebastião Marinho</div><div class="fraco">Parceria institucional de validação clínica e citopatológica, promovendo suporte prático e validação independente do catálogo digital de lâminas. Especialistas clínicas e citopatologistas envolvidas: Dra. Ivanete e Dra. Carol.</div></div>
+    </div>
+  <hr>
+  <div class="colunas colunas--duas">
+    <div><h3>Ficha técnica</h3>
+      <p><strong>Arquitetura</strong> · <code>ConvNeXt Large</code>, <em>transfer learning</em> do ImageNet<br>
+      <strong>Interpretabilidade</strong> · Grad-CAM sobre o último bloco convolucional<br>
+      <strong>Dados</strong> · IARC Digital Atlas e Liquid Based Cytology Pap Smear (Mendeley Data). Detalhes na seção Dados e créditos<br>
+      <strong>Entrada</strong> · campo digitalizado de citologia em meio líquido, RGB<br>
+      <strong>Validação</strong> · Validação cruzada estratificada, 5 folds, 1.096 imagens</p></div>
+    <div><h3>Situação regulatória</h3>
+      <p>Todo o desenvolvimento usou <strong>apenas o acervo público IARC</strong>. Nenhuma lâmina, imagem ou dado de paciente atendido pela rede municipal foi acessado.</p>
+      <ul>
+        <li>O projeto <strong>ainda não foi aprovado por Comitê de Ética em Pesquisa</strong>. A submissão ao CEP é pré-requisito da fase seguinte.</li>
+        <li>Não há registro na ANVISA como software como dispositivo médico (SaMD), exigido para uso assistencial.</li>
+        <li>A responsabilidade diagnóstica permanece integralmente com o citopatologista.</li>
+      </ul></div>
+  </div>
+  <hr>
+  <h3>Próximos passos</h3>
+  <ol class="prosa">
+    <li>Submissão do protocolo ao CEP/UFAM.</li>
+    <li>Validação externa independente com lâminas do Laboratório Sebastião Marinho, sob supervisão das citopatologistas da SEMSA Manaus, medindo desempenho por lâmina e por paciente.</li>
+    <li>Concordância entre a IA e a dupla leitura humana.</li>
+    <li>Estudo de impacto no tempo de fila e na taxa de detecção de HSIL ou pior.</li>
+  </ol>
+</section>
+
+<section id="dados" class="secao" data-secao-conteudo aria-labelledby="h-dados">
+  <h2 id="h-dados" class="titulo-secao">Conjuntos de dados de treinamento</h2>
+  <p>O modelo foi treinado e validado sobre dois acervos públicos de citologia em meio líquido. Nenhuma imagem de paciente atendido pela rede municipal foi utilizada em qualquer etapa.</p>
+  <div class="pilha espaco">
+    <div class="cartao"><span class="etiqueta">IARC</span>
+      <div class="ds-nome">IARC Digital Atlas of Cervical Cytology</div><div class="fraco pequeno">Agência Internacional de Pesquisa em Câncer, vinculada à Organização Mundial da Saúde</div>
+      <p class="fraco">Atlas digital de referência em citologia cervical, com campos anotados por citopatologistas e usado internacionalmente para ensino.</p>
+      <p class="pequeno"><a href="https://screening.iarc.fr/atlascyto.php" target="_blank" rel="noopener">https://screening.iarc.fr/atlascyto.php</a></p></div>
+    <div class="cartao"><span class="etiqueta">Mendeley Data</span>
+      <div class="ds-nome">Liquid based cytology Pap smear images for multi-class diagnosis of cervical cancer</div><div class="fraco pequeno">Institute of Advanced Study in Science and Technology, Índia</div>
+      <p class="fraco">Conjunto de imagens de citologia em meio líquido preparadas e anotadas para classificação multiclasse de lesões pré-cancerosas e de câncer cervical.</p>
+      <p class="pequeno"><a href="https://data.mendeley.com/datasets/zddtpgzv63/2" target="_blank" rel="noopener">https://data.mendeley.com/datasets/zddtpgzv63/2</a></p></div><p class="citacao-ds"><strong>Como citar:</strong> HUSSAIN, Elima; MAHANTA, Lipi B.; BORAH, Himakshi; DAS, Chandana Ray. Liquid based-cytology Pap smear dataset for automated multi-class diagnosis of pre-cancerous and cervical cancer lesions. <em>Data in Brief</em>, v. 30, p. 105589, jun. 2020. DOI: <a href="https://doi.org/10.1016/j.dib.2020.105589" target="_blank" rel="noopener">https://doi.org/10.1016/j.dib.2020.105589</a></p></div>
+  <div class="aviso aviso--info">A combinação dos dois acervos foi o que permitiu chegar às 1096 imagens da validação cruzada. Ela também amplia a variedade de preparo e coloração vista no treino, o que tende a ajudar na generalização. Ainda assim, continuam sendo acervos curados para ensino e pesquisa, com prevalência de lesões bem diferente da rotina de um programa de rastreio.</div>
+  <hr>
+  <h2 class="titulo-secao">Ferramentas de apoio ao desenvolvimento</h2>
+  <p>O código desta plataforma e do aplicativo Android foi desenvolvido com apoio do modelo de IA generativa <strong>Claude Opus 5</strong>, da Anthropic, usado como assistente de programação. A concepção científica, a escolha da arquitetura, o treinamento, a curadoria dos dados, a validação e a revisão de todo o código são de responsabilidade da equipe do projeto.</p>
+  <p class="legenda">Registramos esta informação por transparência científica, do mesmo modo que se declara o uso de qualquer outra ferramenta computacional.</p>
+  <hr>
+  <h2 class="titulo-secao">Bibliotecas e tecnologias</h2>
+  <div class="colunas colunas--duas">
+    <div><p><strong>Modelo e treinamento</strong><br>PyTorch, torchvision (ConvNeXt Large), Albumentations, scikit-learn (validação cruzada estratificada), NumPy</p>
+      <p><strong>Interpretabilidade</strong><br>Grad-CAM implementado sobre o último bloco convolucional; no navegador e no aplicativo, calculado em forma fechada dentro do próprio grafo ONNX</p></div>
+    <div><p><strong>Este site</strong><br>HTML, CSS e JavaScript sem frameworks; ONNX Runtime Web (WebAssembly) para a inferência no navegador, com o modelo quantizado em 8 bits; fontes Inter e IBM Plex Mono (licença OFL), servidas pelo próprio site. Catálogo: Firebase Authentication e Firestore</p>
+      <p><strong>Versão anterior e aplicativo</strong><br>Streamlit, OpenCV, Matplotlib, pandas, Pillow. Aplicativo Android/iOS: Flutter, ONNX Runtime para inferência local no aparelho</p></div>
+  </div>
+  <hr>
+  <h2 class="titulo-secao">Como citar esta plataforma</h2>
+  <pre class="citacao">OLIVEIRA, M. D. L.; MARTINS, T. R.; NAKAMURA, F.; OLIVEIRA, F. G. Sistema de apoio ao diagnóstico citológico em meio líquido assistido por inteligência artificial. Faculdade de Ciências Farmacêuticas e Instituto de Computação, Universidade Federal do Amazonas, em parceria com a Secretaria Municipal de Saúde de Manaus, 2026.</pre>
+  <p class="legenda">Trabalho em andamento, ainda sem publicação revisada por pares e sem aprovação de Comitê de Ética em Pesquisa.</p>
+</section>
+    </main>
+
+<footer class="rodape">
+  <div>
+    <strong>Sistema de Apoio ao Diagnóstico Citológico</strong><br>
+    Faculdade de Ciências Farmacêuticas e Instituto de Computação · UFAM<br>
+    Secretaria Municipal de Saúde de Manaus · Laboratório Sebastião Marinho<br>
+    <a href="https://github.com/micael-oliveira-ufam/ia_citologia_ufam" target="_blank" rel="noopener">Código-fonte no GitHub</a> ·
+    <a href="https://github.com/micael-oliveira-ufam/ia_citologia_ufam/releases" target="_blank" rel="noopener">Aplicativo Android/iOS</a> ·
+    <a href="https://ia-citologia-ufam.streamlit.app/" target="_blank" rel="noopener">Versão anterior (Streamlit)</a>
+  </div>
+  <div class="rodape-dir">
+    <span class="ano">© 2026</span> · Projeto de pesquisa acadêmica<br>
+    Modelo <code>ConvNeXt Large</code> · IARC Digital Atlas e Mendeley Data<br>
+    Sem aprovação de CEP · Não emite laudo<br>
+    <span class="rodape-mini">Código desenvolvido com apoio de Claude Opus 5 (Anthropic)</span>
+  </div>
+</footer>
+  </div>
+  <script type="module" src="js/app.js?v=2"></script>
 </body>
 </html>

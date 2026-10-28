@@ -124,8 +124,13 @@ class ConvNextExportavel(nn.Module):
 # ---------------------------------------------------------------------------
 
 def preparar(caminho_img):
-    img = Image.open(caminho_img).convert("RGB").resize((224, 224), Image.BILINEAR)
-    arr = np.asarray(img, dtype=np.float32) / 255.0
+    # Mesmo redimensionamento do treinamento e da plataforma Streamlit (Albumentations
+    # Resize = cv2.INTER_LINEAR, sem suavização). O aplicativo e o site reproduzem esse filtro.
+    import cv2
+
+    bruto = np.asarray(Image.open(caminho_img).convert("RGB"))
+    img = cv2.resize(bruto, (224, 224), interpolation=cv2.INTER_LINEAR)
+    arr = img.astype(np.float32) / 255.0
     return np.transpose(arr, (2, 0, 1))[None]
 
 
