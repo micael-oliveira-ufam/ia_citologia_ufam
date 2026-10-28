@@ -1,4 +1,4 @@
-// Módulo "Catálogo de lâminas" — leitura pública do acervo do CitoAtlas.
+// Módulo "Catálogo de lâminas" — consulta ao acervo do CitoAtlas (exige login Google).
 //
 // Protocolo cego preservado: o CitoAtlas esconde a classificação de quem ainda
 // não avaliou, e aqui ninguém avalia, então nenhuma classificação, descrição
@@ -8,6 +8,7 @@
 import { CATALOGO } from './config.js';
 import { $, el, limpar, formatarData, idPublico, urlImagemSegura, iniciarPagina } from './comum.js';
 import { listarLaminas, contarVotos, ErroFirestore } from './firestore.js';
+import { montarBotao, usuarioAtual, aoMudar, sair } from './autenticacao.js';
 
 iniciarPagina('catalogo');
 
@@ -287,5 +288,37 @@ buscaEl.addEventListener('input', renderizar);
 filtroVotosEl.addEventListener('change', renderizar);
 maisBtn.addEventListener('click', carregarMais);
 
-carregarMais();
-carregarVotos();
+const painelLogin = $('#login');
+const painelSessao = $('#sessao');
+const conteudoCatalogo = $('#catalogo');
+let iniciado = false;
+
+function aplicarSessao(u) {
+  painelLogin.hidden = !!u;
+  conteudoCatalogo.hidden = !u;
+  painelSessao.hidden = !u;
+  limpar(painelSessao);
+  if (u) {
+    painelSessao.append(
+      el('span', {}, 'Conectado como ', el('strong', {}, u.nome), ' '),
+      el('button', { class: 'btn btn--sec', type: 'button', onclick: sair }, 'Sair'));
+    if (!iniciado) {
+      iniciado = true;
+      carregarMais();
+      carregarVotos();
+    }
+  } else if (iniciado) {
+    // saiu: zera o que estava na tela e permite recarregar no próximo login
+    iniciado = false;
+    Object.assign(estado, { laminas: [], proximo: null, fim: false, votos: null, erro: null });
+    renderizar();
+  }
+}
+
+aoMudar(aplicarSessao);
+aplicarSessao(usuarioAtual());
+montarBotao($('#botao-google'), (e) => {
+  const caixa = $('#erro-login');
+  caixa.hidden = false;
+  caixa.textContent = e.message || String(e);
+});

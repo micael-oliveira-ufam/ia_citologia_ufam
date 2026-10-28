@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Catálogo de lâminas — Colo do Útero com IA</title>
-  <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Leitura pública, com avaliação cega preservada.">
+  <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Consulta com login Google e avaliação cega preservada.">
   <meta name="theme-color" content="#0e6b7b">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230e6b7b%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2714%27 font-family=%27sans-serif%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3ECU%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/site.css">
@@ -32,37 +32,47 @@
       (CitoAtlas). Esta página é só de consulta.
     </p>
 
-    <div class="aviso">
-      <strong>Avaliação cega.</strong> Para não influenciar os citopatologistas que ainda vão
-      avaliar, esta página <strong>não mostra classificações, descrições nem avaliadores</strong>:
-      só a imagem, o ID, a data e quantas avaliações cada lâmina já recebeu. O quórum oficial
-      exige a concordância de pelo menos 3 citopatologistas. Para cadastrar lâminas e avaliar,
-      use o CitoAtlas ou o aplicativo (modo profissional).
+    <div id="login" class="cartao">
+      <h2>Entre para ver o catálogo</h2>
+      <p>O acervo das lâminas é restrito. Entre com a sua conta Google para consultá-lo.</p>
+      <div id="botao-google"></div>
+      <p class="aviso aviso--erro" id="erro-login" role="alert" hidden></p>
     </div>
+    <p id="sessao" class="pequeno" hidden></p>
 
-    <div class="barra" role="search">
-      <div class="campo campo--busca">
-        <label for="busca">Buscar pelo ID (ex.: L-0012)</label>
-        <input id="busca" type="search" autocomplete="off" placeholder="L-0001">
+    <div id="catalogo" hidden>
+      <div class="aviso">
+        <strong>Avaliação cega.</strong> Para não influenciar os citopatologistas que ainda vão
+        avaliar, esta página <strong>não mostra classificações, descrições nem avaliadores</strong>:
+        só a imagem, o ID, a data e quantas avaliações cada lâmina já recebeu. O quórum oficial
+        exige a concordância de pelo menos 3 citopatologistas. Para cadastrar lâminas e avaliar,
+        use o CitoAtlas ou o aplicativo (modo profissional).
       </div>
-      <div class="campo">
-        <label for="filtro-votos">Avaliações</label>
-        <select id="filtro-votos">
-          <option value="todas">Todas</option>
-          <option value="sem">Sem votos</option>
-          <option value="andamento">Em andamento (1 ou 2)</option>
-          <option value="quorum">Quórum atingido (3 ou mais)</option>
-        </select>
+
+      <div class="barra" role="search">
+        <div class="campo campo--busca">
+          <label for="busca">Buscar pelo ID (ex.: L-0012)</label>
+          <input id="busca" type="search" autocomplete="off" placeholder="L-0001">
+        </div>
+        <div class="campo">
+          <label for="filtro-votos">Avaliações</label>
+          <select id="filtro-votos">
+            <option value="todas">Todas</option>
+            <option value="sem">Sem votos</option>
+            <option value="andamento">Em andamento (1 ou 2)</option>
+            <option value="quorum">Quórum atingido (3 ou mais)</option>
+          </select>
+        </div>
+        <span class="contagem" id="contagem" aria-live="polite"></span>
       </div>
-      <span class="contagem" id="contagem" aria-live="polite"></span>
+      <p class="pequeno" id="nota-votos" hidden></p>
+
+      <div id="status" hidden></div>
+      <div class="grade" id="grade"></div>
+      <p style="text-align:center; margin-top:20px">
+        <button class="btn btn--sec" id="mais" type="button" hidden>Carregar mais lâminas</button>
+      </p>
     </div>
-    <p class="pequeno" id="nota-votos" hidden></p>
-
-    <div id="status" hidden></div>
-    <div class="grade" id="grade"></div>
-    <p style="text-align:center; margin-top:20px">
-      <button class="btn btn--sec" id="mais" type="button" hidden>Carregar mais lâminas</button>
-    </p>
 
     <section class="cartao" style="margin-top:28px" aria-labelledby="creditos">
       <h2 id="creditos">Sobre este acervo</h2>

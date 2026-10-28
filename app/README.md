@@ -98,7 +98,7 @@ Cloud, crie um cliente OAuth **Android** (pacote do app + SHA-1 da chave de assi
 iOS, um cliente **iOS** (`GOOGLE_CLIENTE_IOS=... python3 tools/ajustar_plataformas.py`). Se a chave
 de API tiver restrição de aplicativo/referenciador, inclua o app e o domínio do Pages. Use
 `firebase/firestore.rules.sugerido` como ponto de partida e **leia o aviso nele** sobre sigilo
-das avaliações. O app grava com o token do Firebase; o site é só leitura.
+das avaliações. O app grava com o token do Firebase; o site também pede login Google para abrir o catálogo e é só leitura. Para o login do site, inclua `https://micael-oliveira-ufam.github.io` em *Origens JavaScript autorizadas* do cliente OAuth web (Google Cloud → Credenciais) e confirme o domínio em *Firebase Authentication → Domínios autorizados*. O banco real exige login para ler e não aceita `orderBy` na listagem (a ordenação é feita por página, no cliente).
 
 ### 2. Android
 

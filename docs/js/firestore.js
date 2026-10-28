@@ -1,6 +1,8 @@
-// Leitura do Firestore pela API REST (sem SDK). Só leitura: este site não escreve.
+// Leitura do Firestore pela API REST (sem SDK), com o token do usuário logado.
+// Só leitura: este site não escreve.
 
 import { FIREBASE } from './config.js';
+import { token as tokenUsuario } from './autenticacao.js';
 
 const BASE =
   `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}` +
@@ -9,7 +11,7 @@ const BASE =
 export class ErroFirestore extends Error {
   constructor(tipo, mensagem, detalhe) {
     super(mensagem);
-    this.tipo = tipo; // 'rede' | 'permissao' | 'chave' | 'inesperado'
+    this.tipo = tipo; // 'login' | 'rede' | 'permissao' | 'chave' | 'inesperado'
     this.detalhe = detalhe;
   }
 }
@@ -41,9 +43,11 @@ async function buscar(url, { sinal, tempoMs = 25000 } = {}) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(new Error('tempo esgotado')), tempoMs);
   sinal?.addEventListener('abort', () => ctl.abort(sinal.reason), { once: true });
+  const idToken = await tokenUsuario();
+  if (!idToken) throw new ErroFirestore('login', 'Entre com a sua conta Google para ver o catálogo.');
   let resp;
   try {
-    resp = await fetch(url, { signal: ctl.signal });
+    resp = await fetch(url, { signal: ctl.signal, headers: { Authorization: `Bearer ${idToken}` } });
   } catch (e) {
     throw new ErroFirestore('rede', 'Sem conexão com o banco de dados do catálogo.', String(e));
   } finally {
@@ -64,24 +68,26 @@ async function buscar(url, { sinal, tempoMs = 25000 } = {}) {
   if (resp.status === 403 || resp.status === 401) {
     throw new ErroFirestore(
       'permissao',
-      'O banco de dados recusou a leitura pública. As regras do Firestore podem ter sido restringidas.',
+      'O banco de dados recusou a leitura para esta conta. Ela pode não ter permissão no catálogo.',
       corpo.slice(0, 300),
     );
   }
   throw new ErroFirestore('inesperado', `O banco de dados respondeu com erro ${resp.status}.`, corpo.slice(0, 300));
 }
 
-/** Uma página de lâminas, da mais nova para a mais antiga. */
+/** Uma página de lâminas (ordenada da mais nova para a mais antiga dentro da página). */
 export async function listarLaminas({ tamanho, token, sinal }) {
   const p = new URLSearchParams({
     pageSize: String(tamanho),
-    orderBy: 'createdAt desc',
     key: FIREBASE.apiKey,
   });
   if (token) p.set('pageToken', token);
   const dados = await buscar(`${BASE}/slides?${p}`, { sinal });
+  // O banco não aceita orderBy na listagem: ordena aqui, dentro da página.
+  const itens = (dados.documents || []).map(documentoParaObjeto)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return {
-    itens: (dados.documents || []).map(documentoParaObjeto),
+    itens,
     proximo: dados.nextPageToken || null,
   };
 }

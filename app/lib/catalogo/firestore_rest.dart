@@ -203,14 +203,14 @@ class CatalogoRemoto {
     return l.temImagemUtilizavel ? l : null;
   }
 
-  /// Uma página de lâminas, da mais nova para a mais antiga. Documentos sem
+  /// Uma página de lâminas (ordenada da mais nova para a mais antiga dentro da
+  /// página; o banco não aceita orderBy na listagem). Documentos sem
   /// imagem utilizável são descartados.
   Future<PaginaLaminas> listarLaminas({String? token, int tamanho = 24}) async {
     final json = await _enviar(
       'GET',
       _url('/slides', consulta: {
         'pageSize': '$tamanho',
-        'orderBy': 'createdAt desc',
         if (token != null) 'pageToken': token,
       }),
     ) as Map<String, dynamic>;
@@ -220,6 +220,8 @@ class CatalogoRemoto {
       final l = _lamina(d as Map<String, dynamic>);
       if (l != null) itens.add(l);
     }
+    // O banco não aceita orderBy na listagem: ordena aqui, dentro da página.
+    itens.sort((a, b) => b.criadaEm.compareTo(a.criadaEm));
     return PaginaLaminas(itens, json['nextPageToken'] as String?);
   }
 

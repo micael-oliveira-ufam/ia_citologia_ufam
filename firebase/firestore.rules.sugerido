@@ -1,7 +1,7 @@
 rules_version = '2';
 // SUGESTÃO — revise com a equipe antes de publicar no Firebase Console.
-// Objetivo: catálogo legível por todos (o site e o app leem sem login),
-// escrita só por usuário autenticado, e avaliações sigilosas (protocolo cego).
+// Objetivo: catálogo legível só por usuário autenticado (o site e o app pedem
+// login Google), escrita só por usuário autenticado, e avaliações sigilosas.
 //
 // ATENÇÃO: o site público só consegue contar votos se a coleção de avaliações
 // for legível sem login. Isso expõe a classificação de cada avaliador a quem
@@ -12,7 +12,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /slides/{id} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow create: if request.auth != null
                     && request.resource.data.creatorId == request.auth.uid;
       allow update, delete: if request.auth != null
@@ -22,7 +22,7 @@ service cloud.firestore {
     match /evaluations/{id} {
       // Versão estrita (recomendada; exige contagem agregada em outro lugar):
       // allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow read: if true;   // necessário hoje para a contagem de votos sem login
+      allow read: if request.auth != null;   // necessário hoje para a contagem de votos
       allow create, update: if request.auth != null
                     && request.resource.data.userId == request.auth.uid
                     && id == request.resource.data.slideId + '_' + request.auth.uid;
