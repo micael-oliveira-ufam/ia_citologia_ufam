@@ -8,7 +8,7 @@
 //                classification, morphologyDescription, notes, createdAt
 
 import { FIREBASE } from './config.js';
-import { token as tokenFirebase, uidAtual, entrar, ErroAutenticacao } from './autenticacao.js';
+import { token as tokenFirebase, uidAtual, entrar, ErroAutenticacao } from './autenticacao.js?v=3';
 
 const RAIZ =
   `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}` +

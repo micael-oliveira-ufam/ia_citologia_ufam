@@ -10,8 +10,8 @@ import { $, el, limpar, formatarData, idPublico, urlImagemSegura, iniciarPagina 
 import {
   listarLaminas, contarVotos, minhasAvaliacoes, proximoId, criarLamina, atualizarLamina,
   excluirLamina, salvarAvaliacao, entrar, uidAtual, ErroFirestore,
-} from './firestore.js';
-import { comprimirImagem } from './imagem.js';
+} from './firestore.js?v=3';
+import { comprimirImagem } from './imagem.js?v=3';
 
 const CLASSES = [
   ['NILM', 'Negativo para Lesão ou Malignidade'],
