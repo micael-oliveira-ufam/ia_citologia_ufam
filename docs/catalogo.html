@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Catálogo de lâminas | IA Citologia UFAM &amp; SEMSA | Citopatologia com Inteligência Artificial</title>
   <script>document.documentElement.classList.add("js")</script>
-  <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Consulta com login Google e avaliação cega preservada.">
+  <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Cadastro, consulta e avaliação cega, sem necessidade de conta Google.">
   <meta name="theme-color" content="#0e6b7b">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230e6b7b%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2714%27 font-family=%27sans-serif%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3ECU%3C/text%3E%3C/svg%3E">
   <link rel="preload" href="fontes/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -44,23 +44,22 @@
     <main id="conteudo" tabindex="-1">
 
     <h2 class="titulo-secao">Catálogo de lâminas</h2>
-    <p class="legenda">Catálogo Eletrônico de Lâminas de Citopatologia do Laboratório Profº Sebastião Marinho (CitoAtlas). Esta página é só de consulta.</p>
-<div id="login" class="cartao">
-      <h2>Entre para ver o catálogo</h2>
-      <p>O acervo das lâminas é restrito. Entre com a sua conta Google para consultá-lo.</p>
-      <div id="botao-google"></div>
-      <p class="aviso aviso--erro" id="erro-login" role="alert" hidden></p>
+    <p class="legenda">Catálogo Eletrônico de Lâminas de Citopatologia do Laboratório Profº Sebastião Marinho (CitoAtlas). Consulte, cadastre e avalie lâminas.</p>
+<div id="conexao" class="cartao" hidden>
+      <p id="conexao-texto" role="status"></p>
+      <p class="aviso aviso--erro" id="erro-conexao" role="alert" hidden></p>
+      <button class="btn btn--sec" id="conexao-tentar" type="button" hidden>Tentar de novo</button>
     </div>
-    <p id="sessao" class="pequeno" hidden></p>
 
     <div id="catalogo" hidden>
       <div class="aviso">
-        <strong>Avaliação cega.</strong> Para não influenciar os citopatologistas que ainda vão
-        avaliar, esta página <strong>não mostra classificações, descrições nem avaliadores</strong>:
-        só a imagem, o ID, a data e quantas avaliações cada lâmina já recebeu. O quórum oficial
-        exige a concordância de pelo menos 3 citopatologistas. Para cadastrar lâminas e avaliar,
-        use o CitoAtlas ou o aplicativo (modo profissional).
+        <strong>Avaliação cega.</strong> Para não influenciar quem ainda vai avaliar, esta página
+        <strong>não mostra classificações, descrições nem avaliadores</strong> das lâminas de outras
+        pessoas: só a imagem, o ID, a data e quantas avaliações cada lâmina já recebeu. O quórum
+        oficial exige a concordância de pelo menos 3 citopatologistas. Você pode cadastrar lâminas,
+        avaliar as dos outros e editar ou excluir as que você mesmo cadastrou.
       </div>
+      <p><button class="btn" id="nova" type="button">+ Cadastrar lâmina</button></p>
 
       <div class="barra" role="search">
         <div class="campo campo--busca">
@@ -87,6 +86,46 @@
       </p>
     </div>
 
+<dialog class="visor visor--form" id="form-lamina" aria-labelledby="form-titulo">
+    <form class="visor__in form-lamina" id="form" method="dialog" novalidate>
+      <div class="visor__topo">
+        <h2 id="form-titulo">Cadastrar lâmina</h2>
+        <button class="btn btn--sec" id="form-fechar" type="button">Fechar</button>
+      </div>
+      <div class="form-corpo">
+        <div class="aviso aviso--atencao"><strong>Privacidade.</strong> Use apenas um código (L-0001…). Não escreva nome, prontuário ou qualquer dado que identifique o paciente, nem fotografe etiquetas com esses dados.</div>
+        <div class="campo">
+          <label for="f-foto">Foto do campo microscópico</label>
+          <input id="f-foto" type="file" accept="image/jpeg,image/png,image/webp">
+          <img id="f-previa" class="previa" alt="" hidden>
+          <p class="pequeno" id="f-foto-info"></p>
+        </div>
+        <div class="campo">
+          <label for="f-id">ID da lâmina</label>
+          <input id="f-id" type="text" maxlength="12" autocomplete="off" placeholder="L-0001">
+        </div>
+        <div class="campo">
+          <label for="f-data">Data</label>
+          <input id="f-data" type="date">
+        </div>
+        <fieldset class="campo" id="f-classes"><legend>Classificação (Bethesda)</legend></fieldset>
+        <div class="campo">
+          <label for="f-desc">Descrição morfológica (opcional)</label>
+          <textarea id="f-desc" rows="3" maxlength="2000"></textarea>
+        </div>
+        <div class="campo">
+          <label for="f-obs">Observações (opcional)</label>
+          <textarea id="f-obs" rows="2" maxlength="2000"></textarea>
+        </div>
+        <p class="aviso aviso--erro" id="f-erro" role="alert" hidden></p>
+      </div>
+      <div class="visor__rodape">
+        <button class="btn" id="f-salvar" type="submit">Salvar lâmina</button>
+        <span class="pequeno" id="f-progresso" aria-live="polite"></span>
+      </div>
+    </form>
+  </dialog>
+
 <dialog class="visor" id="visor" aria-labelledby="visor-titulo">
     <div class="visor__in">
       <div class="visor__topo">
@@ -95,6 +134,9 @@
       </div>
       <div class="visor__palco" id="palco" tabindex="0" role="img" aria-label="Imagem da lâmina. Arraste para mover; use +, − e 0 para ampliar, reduzir e ajustar.">
         <img id="visor-img" alt="">
+      </div>
+      <div class="painel-aval" id="painel">
+        <div id="painel-conteudo"></div>
       </div>
       <div class="visor__rodape">
         <div class="visor__ctl">
@@ -127,6 +169,6 @@
   </div>
 </footer>
   </div>
-  <script type="module" src="js/catalogo.js?v=2"></script>
+  <script type="module" src="js/catalogo.js?v=3"></script>
 </body>
 </html>

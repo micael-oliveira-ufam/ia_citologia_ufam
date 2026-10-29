@@ -1,14 +1,29 @@
-// Módulo "Catálogo de lâminas" — consulta ao acervo do CitoAtlas (exige login Google).
+// Módulo "Catálogo de lâminas" — acervo do CitoAtlas com identidade anônima do Firebase.
 //
-// Protocolo cego preservado: o CitoAtlas esconde a classificação de quem ainda
-// não avaliou, e aqui ninguém avalia, então nenhuma classificação, descrição
-// morfológica, observação ou nome de avaliador é lida ou exibida. Aparecem
-// apenas a imagem, o ID, a data e o número de votos.
+// Protocolo cego preservado: a lista e o visor nunca mostram classificação,
+// descrição, observação nem avaliador de lâminas de OUTRAS pessoas. O criador só vê
+// o que ele mesmo cadastrou (no formulário de edição) e cada pessoa só vê a
+// própria avaliação. Todo texto vindo do banco entra na página por textContent.
 
 import { CATALOGO } from './config.js';
 import { $, el, limpar, formatarData, idPublico, urlImagemSegura, iniciarPagina } from './comum.js';
-import { listarLaminas, contarVotos, ErroFirestore } from './firestore.js';
-import { montarBotao, usuarioAtual, aoMudar, sair } from './autenticacao.js';
+import {
+  listarLaminas, contarVotos, minhasAvaliacoes, proximoId, criarLamina, atualizarLamina,
+  excluirLamina, salvarAvaliacao, entrar, uidAtual, ErroFirestore,
+} from './firestore.js';
+import { comprimirImagem } from './imagem.js';
+
+const CLASSES = [
+  ['NILM', 'Negativo para Lesão ou Malignidade'],
+  ['ASC-US', 'Células Escamosas Atípicas de Significado Indeterminado'],
+  ['ASC-H', 'Células Escamosas Atípicas (Não se pode excluir HSIL)'],
+  ['LSIL', 'Lesão Intraepitelial Escamosa de Baixo Grau'],
+  ['HSIL', 'Lesão Intraepitelial Escamosa de Alto Grau'],
+  ['SCC', 'Carcinoma de Células Escamosas'],
+  ['Adenocarcinoma', 'Adenocarcinoma'],
+  ['Outro', 'Outro preenchimento / Outras alterações'],
+];
+const SIGLAS = new Set(CLASSES.map((c) => c[0]));
 
 iniciarPagina('catalogo');
 
@@ -20,6 +35,7 @@ const estado = {
   votos: null, // Map(slideId -> n) ou null se indisponível
   votosCompleto: true,
   erro: null,
+  minhas: new Map(), // slideId -> minha avaliação
 };
 
 const grade = $('#grade');
@@ -133,7 +149,8 @@ function cartao(l) {
   },
   el('div', { class: 'lamina__foto' },
     el('img', { src: url, alt: `Campo microscópico da ${id.texto}`, loading: 'lazy', decoding: 'async' }),
-    el('span', { class: 'lamina__selo' }, 'Classificação oculta')),
+    el('span', { class: 'lamina__selo' }, souCriador(l) ? 'Sua lâmina' : 'Classificação oculta'),
+    estado.minhas.has(l.id) ? el('span', { class: 'lamina__selo lamina__selo--esq' }, 'Avaliada por você') : null),
   el('div', { class: 'lamina__corpo' },
     el('div', { class: 'lamina__linha' },
       el('span', { class: 'lamina__id', title: id.oculto ? 'ID original ocultado por privacidade' : null }, id.texto),
@@ -202,17 +219,21 @@ function zoomPara(fator, cx, cy) {
   aplicarVista();
 }
 
+let atual = null; // lâmina aberta no visor
+
 function abrirVisor(l) {
+  atual = l;
   const id = idPublico(l.patientId);
   const n = votosDe(l);
   visorTitulo.textContent = id.texto;
   visorInfo.textContent =
     `Data: ${formatarData(l.date || l.createdAt)} · ${seloVotos(n).texto} · ` +
-    'A classificação fica oculta: a avaliação no CitoAtlas é cega.';
+    'A classificação fica oculta: a avaliação é cega.';
   visorImg.alt = `Campo microscópico da ${id.texto}`;
   visorImg.onload = ajustarVista;
   visorImg.src = urlImagemSegura(l.imageUrl);
   if (visorImg.complete && visorImg.naturalWidth) ajustarVista();
+  desenharPainel();
   visor.showModal();
   palco.focus();
 }
@@ -282,43 +303,239 @@ palco.addEventListener('keydown', (e) => {
   e.preventDefault();
 });
 
+// ------------------------------------------------------ avaliação / edição
+
+const painelEl = $('#painel-conteudo');
+
+function souCriador(l) {
+  const u = uidAtual();
+  return !!u && !!l.creatorId && l.creatorId === u;
+}
+
+function listaClasses(nome, marcada) {
+  return CLASSES.map(([sigla, descricao]) => el('label', { class: 'opcao' },
+    el('input', { type: 'radio', name: nome, value: sigla, checked: sigla === marcada }),
+    el('strong', {}, sigla), ` — ${descricao}`));
+}
+
+function desenharPainel(refazer = false) {
+  limpar(painelEl);
+  const l = atual;
+  if (!l) return;
+  const minha = estado.minhas.get(l.id);
+  const caixa = el('div', { class: 'aviso aviso--erro', role: 'alert', hidden: true });
+  const falha = (e) => { caixa.hidden = false; caixa.textContent = e.message || String(e); };
+
+  if (minha && !refazer) {
+    painelEl.append(el('div', { class: 'aviso aviso--ok' },
+      el('strong', {}, 'Sua avaliação: '), minha.classification || '—', ' ',
+      el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: () => desenharPainel(true) },
+        'Refazer minha avaliação')));
+  } else {
+    const nome = 'aval-classe';
+    const desc = el('textarea', { rows: 2, maxlength: 2000, 'aria-label': 'Descrição morfológica (opcional)', placeholder: 'Descrição morfológica (opcional)' });
+    const obs = el('textarea', { rows: 2, maxlength: 2000, 'aria-label': 'Observações (opcional)', placeholder: 'Observações (opcional)' });
+    if (minha) { desc.value = minha.morphologyDescription || ''; obs.value = minha.notes || ''; }
+    const salvar = el('button', { class: 'btn', type: 'submit' }, 'Salvar avaliação');
+    const form = el('form', { class: 'aval-form', novalidate: true,
+      onsubmit: async (ev) => {
+        ev.preventDefault();
+        caixa.hidden = true;
+        const marcada = form.querySelector(`input[name="${nome}"]:checked`);
+        if (!marcada || !SIGLAS.has(marcada.value)) { falha(new Error('Escolha uma classificação.')); return; }
+        salvar.disabled = true;
+        try {
+          const a = await salvarAvaliacao({
+            slideId: l.id, classificacao: marcada.value, descricao: desc.value.trim(), observacoes: obs.value.trim(),
+          });
+          estado.minhas.set(l.id, a);
+          const antes = estado.votos?.get(l.id) || 0;
+          if (estado.votos && !minha) estado.votos.set(l.id, antes + 1);
+          desenharPainel();
+          renderizar();
+          atualizarInfoVisor();
+        } catch (e) { falha(e); salvar.disabled = false; }
+      } },
+    el('p', { class: 'pequeno' }, minha ? 'Refazendo a sua avaliação:' : 'Avalie esta lâmina (a avaliação é cega):'),
+    el('div', { class: 'opcoes' }, listaClasses(nome, minha?.classification)),
+    desc, obs, salvar);
+    painelEl.append(form);
+  }
+
+  if (souCriador(l)) {
+    painelEl.append(el('div', { class: 'botoes--linha acoes-dono' },
+      el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: () => abrirFormulario(l) }, 'Editar minha lâmina'),
+      el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: (ev) => confirmarExclusao(ev.currentTarget, l, falha) }, 'Excluir minha lâmina')));
+  }
+  painelEl.append(caixa);
+}
+
+function confirmarExclusao(botao, l, falha) {
+  const dono = botao.parentElement;
+  limpar(dono);
+  dono.append(
+    el('span', { class: 'pequeno' }, 'Excluir esta lâmina e suas avaliações? Não dá para desfazer. '),
+    el('button', { class: 'btn btn--mini', type: 'button', onclick: async (ev) => {
+      ev.currentTarget.disabled = true;
+      try {
+        await excluirLamina(l.id);
+        estado.laminas = estado.laminas.filter((x) => x.id !== l.id);
+        estado.minhas.delete(l.id);
+        visor.close();
+        renderizar();
+      } catch (e) { falha(e); desenharPainel(); }
+    } }, 'Sim, excluir'),
+    el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: () => desenharPainel() }, 'Cancelar'));
+}
+
+function atualizarInfoVisor() {
+  if (!atual) return;
+  visorInfo.textContent =
+    `Data: ${formatarData(atual.date || atual.createdAt)} · ${seloVotos(votosDe(atual)).texto} · ` +
+    'A classificação fica oculta: a avaliação é cega.';
+}
+
+// ----------------------------------------------------------- cadastro/edição
+
+const formDlg = $('#form-lamina');
+const form = $('#form');
+const fFoto = $('#f-foto');
+const fPrevia = $('#f-previa');
+const fFotoInfo = $('#f-foto-info');
+const fId = $('#f-id');
+const fData = $('#f-data');
+const fClasses = $('#f-classes');
+const fDesc = $('#f-desc');
+const fObs = $('#f-obs');
+const fErro = $('#f-erro');
+const fSalvar = $('#f-salvar');
+const fProg = $('#f-progresso');
+let editando = null; // lâmina em edição ou null (nova)
+let imagemPronta = null; // data URL comprimido
+
+function hoje() {
+  const d = new Date();
+  const dois = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${dois(d.getMonth() + 1)}-${dois(d.getDate())}`;
+}
+
+function erroForm(msg) {
+  fErro.hidden = !msg;
+  fErro.textContent = msg || '';
+}
+
+async function abrirFormulario(l = null) {
+  editando = l;
+  imagemPronta = null;
+  erroForm('');
+  fProg.textContent = '';
+  fSalvar.disabled = false;
+  fFoto.value = '';
+  fFotoInfo.textContent = l ? 'Deixe em branco para manter a foto atual.' : 'Obrigatória. A foto é reduzida no seu aparelho antes de enviar.';
+  fPrevia.hidden = true;
+  fPrevia.removeAttribute('src');
+  $('#form-titulo').textContent = l ? 'Editar lâmina' : 'Cadastrar lâmina';
+  fId.value = l ? (l.patientId || '') : '';
+  fData.value = l ? (l.date || hoje()) : hoje();
+  fDesc.value = l ? (l.morphologyDescription || '') : '';
+  fObs.value = l ? (l.notes || '') : '';
+  while (fClasses.children.length > 1) fClasses.lastChild.remove();
+  for (const n of listaClasses('f-classe', l?.classification)) fClasses.append(n);
+  if (visor.open) visor.close();
+  formDlg.showModal();
+  if (!l) {
+    try { fId.value = await proximoId(); } catch (_) { fId.placeholder = 'L-0001'; }
+  }
+}
+
+fFoto.addEventListener('change', async () => {
+  erroForm('');
+  imagemPronta = null;
+  const f = fFoto.files?.[0];
+  if (!f) { fPrevia.hidden = true; return; }
+  fFotoInfo.textContent = 'Preparando a imagem…';
+  try {
+    imagemPronta = await comprimirImagem(f);
+    fPrevia.src = imagemPronta;
+    fPrevia.alt = 'Prévia da foto escolhida';
+    fPrevia.hidden = false;
+    fFotoInfo.textContent = `Imagem pronta (${Math.round(imagemPronta.length / 1024)} KB).`;
+  } catch (e) {
+    fFotoInfo.textContent = '';
+    erroForm(e.message);
+  }
+});
+
+form.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  erroForm('');
+  if (!editando && !imagemPronta) { erroForm('Escolha a foto da lâmina.'); return; }
+  const id = fId.value.trim().toUpperCase();
+  if (!/^L-\d{1,6}$/.test(id)) { erroForm('Use um ID no formato L-0001 (sem nome nem dados do paciente).'); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fData.value)) { erroForm('Informe a data.'); return; }
+  const marcada = form.querySelector('input[name="f-classe"]:checked');
+  if (!marcada || !SIGLAS.has(marcada.value)) { erroForm('Escolha a classificação.'); return; }
+  fSalvar.disabled = true;
+  fProg.textContent = 'Salvando…';
+  try {
+    const dados = {
+      patientId: id, data: fData.value, classificacao: marcada.value,
+      descricao: fDesc.value.trim(), observacoes: fObs.value.trim(),
+    };
+    if (editando) {
+      const novo = await atualizarLamina(editando.id, { ...dados, ...(imagemPronta ? { imagem: imagemPronta } : {}) });
+      const i = estado.laminas.findIndex((x) => x.id === editando.id);
+      const mesclada = { ...editando, ...novo, imageUrl: imagemPronta || editando.imageUrl };
+      if (i >= 0) estado.laminas[i] = mesclada;
+    } else {
+      const nova = await criarLamina({ ...dados, imagem: imagemPronta });
+      estado.laminas.unshift(nova);
+    }
+    formDlg.close();
+    renderizar();
+  } catch (e) {
+    erroForm(e.message || String(e));
+    fProg.textContent = '';
+    fSalvar.disabled = false;
+  }
+});
+
+$('#form-fechar').addEventListener('click', () => formDlg.close());
+$('#nova').addEventListener('click', () => abrirFormulario(null));
+
 // ------------------------------------------------------------------ início
 
 buscaEl.addEventListener('input', renderizar);
 filtroVotosEl.addEventListener('change', renderizar);
 maisBtn.addEventListener('click', carregarMais);
 
-const painelLogin = $('#login');
-const painelSessao = $('#sessao');
+const painelConexao = $('#conexao');
+const textoConexao = $('#conexao-texto');
+const erroConexao = $('#erro-conexao');
+const tentarBtn = $('#conexao-tentar');
 const conteudoCatalogo = $('#catalogo');
-let iniciado = false;
 
-function aplicarSessao(u) {
-  painelLogin.hidden = !!u;
-  conteudoCatalogo.hidden = !u;
-  painelSessao.hidden = !u;
-  limpar(painelSessao);
-  if (u) {
-    painelSessao.append(
-      el('span', {}, 'Conectado como ', el('strong', {}, u.nome), ' '),
-      el('button', { class: 'btn btn--sec', type: 'button', onclick: sair }, 'Sair'));
-    if (!iniciado) {
-      iniciado = true;
-      carregarMais();
-      carregarVotos();
-    }
-  } else if (iniciado) {
-    // saiu: zera o que estava na tela e permite recarregar no próximo login
-    iniciado = false;
-    Object.assign(estado, { laminas: [], proximo: null, fim: false, votos: null, erro: null });
-    renderizar();
+async function iniciar() {
+  painelConexao.hidden = false;
+  conteudoCatalogo.hidden = true;
+  erroConexao.hidden = true;
+  tentarBtn.hidden = true;
+  textoConexao.textContent = 'Conectando ao banco de dados do catálogo…';
+  try {
+    await entrar();
+  } catch (e) {
+    textoConexao.textContent = 'Não foi possível conectar.';
+    erroConexao.hidden = false;
+    erroConexao.textContent = e.message || String(e);
+    tentarBtn.hidden = false;
+    return;
   }
+  painelConexao.hidden = true;
+  conteudoCatalogo.hidden = false;
+  try { estado.minhas = await minhasAvaliacoes(); } catch (e) { console.warn('Minhas avaliações indisponíveis:', e); }
+  carregarMais();
+  carregarVotos();
 }
 
-aoMudar(aplicarSessao);
-aplicarSessao(usuarioAtual());
-montarBotao($('#botao-google'), (e) => {
-  const caixa = $('#erro-login');
-  caixa.hidden = false;
-  caixa.textContent = e.message || String(e);
-});
+tentarBtn.addEventListener('click', iniciar);
+iniciar();

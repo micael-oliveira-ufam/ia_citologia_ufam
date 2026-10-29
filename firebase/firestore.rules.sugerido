@@ -1,32 +1,45 @@
 rules_version = '2';
 // SUGESTÃO — revise com a equipe antes de publicar no Firebase Console.
-// Objetivo: catálogo legível só por usuário autenticado (o site e o app pedem
-// login Google), escrita só por usuário autenticado, e avaliações sigilosas.
 //
-// ATENÇÃO: o site público só consegue contar votos se a coleção de avaliações
-// for legível sem login. Isso expõe a classificação de cada avaliador a quem
-// consultar a API direto. Se o sigilo for requisito, mova a contagem para um
-// campo agregado na lâmina (atualizado por Cloud Function) e restrinja a leitura
-// de "evaluations" ao próprio avaliador (regra comentada abaixo).
+// Pré-requisito: Firebase Authentication > Método de login > ativar "Anônimo".
+// O site abre uma sessão anônima sozinho (sem conta Google); o aplicativo continua
+// podendo usar Google. Em ambos, request.auth.uid identifica quem criou/avaliou.
+//
+// Riscos a considerar: qualquer pessoa com o site pode criar uma sessão anônima e,
+// portanto, gravar. Os limites abaixo (campos, tamanhos, dono) reduzem abuso, mas não
+// o eliminam; se necessário, habilite o App Check e restrinja a chave de API.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     match /slides/{id} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
-                    && request.resource.data.creatorId == request.auth.uid;
-      allow update, delete: if request.auth != null
+                    && request.resource.data.creatorId == request.auth.uid
+                    && request.resource.data.patientId is string
+                    && request.resource.data.patientId.size() <= 40
+                    && request.resource.data.imageUrl is string
+                    && request.resource.data.imageUrl.size() < 400000;
+      allow update: if request.auth != null
+                    && resource.data.creatorId == request.auth.uid
+                    && request.resource.data.creatorId == request.auth.uid
+                    && request.resource.data.imageUrl.size() < 400000;
+      allow delete: if request.auth != null
                     && resource.data.creatorId == request.auth.uid;
     }
 
     match /evaluations/{id} {
-      // Versão estrita (recomendada; exige contagem agregada em outro lugar):
-      // allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow read: if request.auth != null;   // necessário hoje para a contagem de votos
+      // O site precisa ler a coleção para contar votos (só o campo slideId é pedido).
+      // Se o sigilo da classificação de cada avaliador for requisito, troque por
+      //   allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // e guarde uma contagem agregada na lâmina (Cloud Function).
+      allow read: if request.auth != null;
       allow create, update: if request.auth != null
                     && request.resource.data.userId == request.auth.uid
                     && id == request.resource.data.slideId + '_' + request.auth.uid;
-      allow delete: if false;
+      // Quem avaliou ou o criador da lâmina pode apagar (usado ao excluir a lâmina).
+      allow delete: if request.auth != null
+                    && (resource.data.userId == request.auth.uid
+                        || get(/databases/$(database)/documents/slides/$(resource.data.slideId)).data.creatorId == request.auth.uid);
     }
   }
 }

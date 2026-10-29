@@ -13,7 +13,7 @@ Aplicativo Flutter (Android e iOS) que reúne, em um só lugar:
 
 A análise de citologia roda **dentro do aparelho/navegador**: a imagem não é enviada a servidor. A
 internet é usada para (1) baixar **uma vez** o arquivo do modelo, publicado no GitHub Pages, e
-(2) acessar o catálogo (Firestore) e o login Google.
+(2) acessar o catálogo (Firestore) com login anônimo do Firebase.
 
 > Uso acadêmico e demonstrativo. O modelo de citologia foi treinado só com o IARC Digital Atlas,
 > sem aprovação de Comitê de Ética, e o de risco tem poder discriminativo fraco (veja
@@ -33,7 +33,7 @@ abertura e há um botão "Trocar perfil" no topo). A escolha define as abas e o 
 | Sobre o projeto | O aplicativo · Equipe · Limites | O projeto · Equipe · Desempenho · Modelo de risco (gráficos) · Limitações |
 
 A escolha é **de conteúdo, não de acesso**: qualquer pessoa pode escolher qualquer perfil (a
-aba Catálogo, porém, exige login Google para avaliar ou cadastrar). A ferramenta de citologia traz o aviso ético em todas as telas.
+página Catálogo usa uma sessão anônima do Firebase, sem conta Google, para cadastrar e avaliar). A ferramenta de citologia traz o aviso ético em todas as telas.
 
 ## Estrutura
 
@@ -91,15 +91,19 @@ Arquivos acima de 100 MB não entram no GitHub (o script recusa). Ative o Pages 
 > A ordem das classes em `lib/data/bethesda.dart` (`ordemDoModelo`: SCC, HSIL, LSIL, NILM) precisa
 > bater com a do treinamento. Trocá-la inverte diagnósticos sem erro visível.
 
-### 1b. Catálogo e login Google
+### 1b. Catálogo (site): login anônimo do Firebase
 
-O catálogo lê o Firestore do projeto CitoAtlas (`app/lib/config.dart` e `docs/js/config.js`).
-Para o login funcionar no app: no Firebase Authentication, ative o provedor Google; no Google
-Cloud, crie um cliente OAuth **Android** (pacote do app + SHA-1 da chave de assinatura) e, para
-iOS, um cliente **iOS** (`GOOGLE_CLIENTE_IOS=... python3 tools/ajustar_plataformas.py`). Se a chave
-de API tiver restrição de aplicativo/referenciador, inclua o app e o domínio do Pages. Use
-`firebase/firestore.rules.sugerido` como ponto de partida e **leia o aviso nele** sobre sigilo
-das avaliações. O app grava com o token do Firebase; o site também pede login Google para abrir o catálogo e é só leitura. Para o login do site, inclua `https://micael-oliveira-ufam.github.io` em *Origens JavaScript autorizadas* do cliente OAuth web (Google Cloud → Credenciais) e confirme o domínio em *Firebase Authentication → Domínios autorizados*. O banco real exige login para ler e não aceita `orderBy` na listagem (a ordenação é feita por página, no cliente).
+O site **não pede conta Google**. Ao abrir `catalogo.html`, ele cria sozinho um usuário anônimo
+(API REST do Firebase Authentication) e usa o token nas chamadas ao Firestore. Dá para:
+consultar, **cadastrar lâmina (foto reduzida no navegador para ≤ ~250 mil caracteres base64)**,
+**avaliar às cegas** (refazer a própria avaliação) e **editar/excluir as lâminas que o próprio navegador cadastrou**.
+
+Passos únicos no Firebase (ações suas, no console):
+1. *Authentication → Método de login → Anônimo → Ativar*.
+2. Publicar regras do Firestore parecidas com `firebase/firestore.rules.sugerido` (leitura/escrita só autenticado; dono = `creatorId == request.auth.uid`).
+3. Se a chave de API tiver restrição de referenciador, incluir `https://micael-oliveira-ufam.github.io/*` e permitir as APIs Identity Toolkit, Token Service e Firestore.
+
+Limites honestos: a identidade anônima fica no `localStorage`; limpar os dados do navegador (ou trocar de aparelho) perde a posse das lâminas. Qualquer pessoa com o link consegue criar sessão anônima, então as regras e, se possível, o App Check são a proteção real. O aplicativo Flutter continua usando login Google.
 
 ### 2. Android
 

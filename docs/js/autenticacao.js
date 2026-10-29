@@ -1,119 +1,133 @@
-// Login com Google para o catálogo (somente leitura).
+// Identidade anônima do Firebase (sem conta Google e sem tela de login).
 //
-// O Firestore do CitoAtlas exige usuário autenticado. O botão do Google
-// (Google Identity Services) entrega um token do Google; ele é trocado por um
-// token do Firebase pela API REST do Firebase Auth, que o Firestore entende.
-// Os tokens ficam só na memória desta aba: ao recarregar a página, é preciso
-// entrar de novo.
+// Ao abrir o catálogo, o site cria (ou retoma) um usuário anônimo pela API REST
+// do Firebase Authentication. O Firestore passa a enxergar um `uid` estável neste
+// navegador: é ele que identifica "minhas lâminas" e "minhas avaliações".
+// O token de renovação fica no localStorage; se o armazenamento do navegador for
+// apagado, nasce um novo uid e as lâminas antigas deixam de ser editáveis aqui.
+//
+// Requer ativar o provedor "Anônimo" em Firebase > Authentication > Método de login.
 
-import { FIREBASE, GOOGLE_CLIENTE_WEB } from './config.js';
+import { FIREBASE } from './config.js';
 
-const ouvintes = new Set();
-let usuario = null;
+const CHAVE_LS = 'citoatlas.anonimo.v1';
+const chave = encodeURIComponent(FIREBASE.apiKey);
+
+export class ErroAutenticacao extends Error {
+  constructor(tipo, mensagem, detalhe) {
+    super(mensagem);
+    this.tipo = tipo; // 'desativado' | 'chave' | 'rede' | 'inesperado'
+    this.detalhe = detalhe;
+  }
+}
+
+let uid = null;
 let idToken = null;
 let renovacao = null;
 let expira = 0;
+let emAndamento = null;
 
-export const usuarioAtual = () => usuario;
-export const aoMudar = (fn) => { ouvintes.add(fn); return () => ouvintes.delete(fn); };
-const avisar = () => ouvintes.forEach((f) => { try { f(usuario); } catch (_) { /* ignora */ } });
-
-const chave = encodeURIComponent(FIREBASE.apiKey);
-
-function guardar(id, ren, segundos) {
-  idToken = id;
-  renovacao = ren;
-  expira = Date.now() + (Number(segundos) || 3600) * 1000;
+function lerSalvo() {
+  try {
+    const j = JSON.parse(localStorage.getItem(CHAVE_LS) || 'null');
+    if (j && typeof j.refresh === 'string' && j.refresh) return j;
+  } catch (_) { /* sem armazenamento */ }
+  return null;
+}
+function salvar() {
+  try { localStorage.setItem(CHAVE_LS, JSON.stringify({ uid, refresh: renovacao })); } catch (_) { /* ignora */ }
 }
 
-async function trocar(credencialGoogle) {
-  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${chave}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      postBody: `id_token=${encodeURIComponent(credencialGoogle)}&providerId=google.com`,
-      requestUri: 'http://localhost',
-      returnIdpCredential: true,
-      returnSecureToken: true,
-    }),
-  });
-  if (!r.ok) {
-    throw new Error(
-      `O Firebase recusou o login (${r.status}). Confira se o provedor Google está ativado ` +
-      'no Firebase Authentication.');
+function guardar(id, ren, segundos, novoUid) {
+  idToken = id;
+  renovacao = ren;
+  if (novoUid) uid = novoUid;
+  expira = Date.now() + (Number(segundos) || 3600) * 1000;
+  salvar();
+}
+
+async function pedir(url, init) {
+  let r;
+  try {
+    r = await fetch(url, init);
+  } catch (e) {
+    throw new ErroAutenticacao('rede', 'Sem conexão com o Firebase. Verifique a internet e tente de novo.', String(e));
   }
-  const j = await r.json();
-  const email = j.email || '';
-  usuario = {
-    uid: j.localId,
-    email,
-    nome: (j.displayName || '').trim() || (email.split('@')[0] || 'Citopatologista'),
-  };
-  guardar(j.idToken, j.refreshToken, j.expiresIn);
+  if (r.ok) return r.json();
+  let corpo = '';
+  try { corpo = await r.text(); } catch (_) { /* ignora */ }
+  const e = new ErroAutenticacao('inesperado', `O Firebase Authentication respondeu com erro ${r.status}.`, corpo.slice(0, 300));
+  e.status = r.status;
+  throw e;
+}
+
+async function criarAnonimo() {
+  try {
+    const j = await pedir(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${chave}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ returnSecureToken: true }),
+    });
+    guardar(j.idToken, j.refreshToken, j.expiresIn, j.localId);
+  } catch (e) {
+    if (e instanceof ErroAutenticacao && e.status) {
+      const d = e.detalhe || '';
+      if (/OPERATION_NOT_ALLOWED|ADMIN_ONLY_OPERATION/i.test(d)) {
+        throw new ErroAutenticacao('desativado',
+          'O login anônimo não está ativado no Firebase. No console do Firebase, abra Authentication > ' +
+          'Método de login e ative o provedor "Anônimo".', d);
+      }
+      if (/API_KEY|referer|blocked|PERMISSION_DENIED/i.test(d) || e.status === 403) {
+        throw new ErroAutenticacao('chave',
+          'A chave de API do projeto bloqueia este endereço ou o serviço. No Google Cloud, em Credenciais, ' +
+          'autorize este site na chave do navegador (e a API Identity Toolkit).', d);
+      }
+    }
+    throw e;
+  }
 }
 
 async function renovar() {
-  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${chave}`, {
+  const j = await pedir(`https://securetoken.googleapis.com/v1/token?key=${chave}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(renovacao || '')}`,
   });
-  if (!r.ok) throw new Error('renovação recusada');
-  const j = await r.json();
-  guardar(j.id_token, j.refresh_token, j.expires_in);
+  guardar(j.id_token, j.refresh_token, j.expires_in, j.user_id);
 }
 
-/** Token do Firebase válido, ou null se ninguém entrou. */
+/** Garante uma identidade anônima válida. Retorna o uid. */
+export function entrar() {
+  if (uid && idToken && expira - Date.now() > 120000) return Promise.resolve(uid);
+  if (emAndamento) return emAndamento;
+  emAndamento = (async () => {
+    try {
+      if (!renovacao) {
+        const s = lerSalvo();
+        if (s) { renovacao = s.refresh; uid = s.uid; }
+      }
+      if (renovacao) {
+        try {
+          await renovar();
+          return uid;
+        } catch (e) {
+          if (e instanceof ErroAutenticacao && e.tipo === 'rede') throw e;
+          renovacao = null; uid = null; // token recusado: cria outra identidade
+        }
+      }
+      await criarAnonimo();
+      return uid;
+    } finally {
+      emAndamento = null;
+    }
+  })();
+  return emAndamento;
+}
+
+/** Token do Firebase válido (entra se preciso). */
 export async function token() {
-  if (!usuario) return null;
-  if (idToken && expira - Date.now() > 120000) return idToken;
-  try {
-    await renovar();
-  } catch (_) {
-    sair();
-    return null;
-  }
+  await entrar();
   return idToken;
 }
 
-export function sair() {
-  usuario = null; idToken = null; renovacao = null; expira = 0;
-  try { window.google?.accounts.id.disableAutoSelect(); } catch (_) { /* ignora */ }
-  avisar();
-}
-
-function carregarGIS() {
-  return new Promise((ok, falha) => {
-    if (window.google?.accounts?.id) return ok();
-    const s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.async = true;
-    s.onload = () => ok();
-    s.onerror = () => falha(new Error('Não foi possível carregar o login do Google (sem conexão ou bloqueado).'));
-    document.head.append(s);
-  });
-}
-
-/** Desenha o botão "Entrar com o Google" em [alvo]. */
-export async function montarBotao(alvo, aoErro) {
-  try {
-    await carregarGIS();
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENTE_WEB,
-      auto_select: false,
-      callback: async (resp) => {
-        try {
-          await trocar(resp.credential);
-          avisar();
-        } catch (e) {
-          aoErro?.(e);
-        }
-      },
-    });
-    window.google.accounts.id.renderButton(alvo, {
-      theme: 'outline', size: 'large', text: 'signin_with', locale: 'pt-BR',
-    });
-  } catch (e) {
-    aoErro?.(e);
-  }
-}
+export const uidAtual = () => uid;

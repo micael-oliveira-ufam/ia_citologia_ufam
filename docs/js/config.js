@@ -8,12 +8,6 @@ export const FIREBASE = {
   apiKey: "AIzaSyARQE9R_y8ZXGpl-rkWhpKiyp-wVwf3EpE",
 };
 
-// Cliente OAuth web do Google (o mesmo do app). No Google Cloud (APIs e serviços >
-// Credenciais), inclua https://micael-oliveira-ufam.github.io em "Origens JavaScript
-// autorizadas" deste cliente; o login do site só funciona depois disso.
-export const GOOGLE_CLIENTE_WEB =
-  '657710120359-e9ojdqbiv7dkcdpkols2maq2dd32et6e.apps.googleusercontent.com';
-
 // Repositório e site no GitHub (ajuste se o nome do repositório for outro).
 export const REPOSITORIO = 'https://github.com/micael-oliveira-ufam/ia_citologia_ufam';
 

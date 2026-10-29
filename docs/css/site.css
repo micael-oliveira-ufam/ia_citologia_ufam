@@ -314,3 +314,18 @@ dialog.visor::backdrop { background: rgba(10,20,28,.72); }
 }
 a, .citacao-ds, .ds-nome, .inst-nome { overflow-wrap: anywhere; }
 .citacao { max-width: 100%; }
+
+/* ---- catálogo: cadastro, avaliação e edição ---- */
+.lamina__selo--esq { right: auto; left: 8px; background: rgba(29,90,69,.9); }
+.painel-aval { padding: 10px 14px; border-top: 1px solid var(--linha); max-height: 36vh; overflow: auto; }
+.aval-form { display: grid; gap: 8px; }
+.aval-form textarea, .form-lamina textarea { width: 100%; font: inherit; padding: .5rem .7rem; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie); color: var(--tinta); }
+.opcoes { display: grid; gap: 4px; }
+.opcao { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; padding: 4px 2px; }
+.opcao input { margin-top: 4px; }
+.acoes-dono { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.form-corpo { padding: 12px 14px; overflow: auto; display: grid; gap: 12px; max-height: calc(94vh - 130px); }
+.form-lamina fieldset { border: 1px solid var(--linha); border-radius: 10px; padding: 8px 12px; }
+.previa { max-width: 100%; max-height: 220px; border-radius: 8px; margin-top: 6px; }
+dialog.visor--form { width: min(640px, 96vw); }
+.form-lamina input[type=text], .form-lamina input[type=date] { width: 100%; min-height: 42px; font: inherit; padding: .4rem .7rem; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie); color: var(--tinta); }

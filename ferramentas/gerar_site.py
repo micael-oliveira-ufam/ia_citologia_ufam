@@ -513,8 +513,8 @@ def main():
 
     cat = (Path(__file__).parent / "catalogo_corpo.html").read_text(encoding="utf-8")
     catalogo = pagina("Catálogo de lâminas | " + SEO_TITULO, cat, "catalogo", False,
-                      '  <script type="module" src="js/catalogo.js?v=2"></script>',
-                      extra_head=f'\n  <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Consulta com login Google e avaliação cega preservada.">')
+                      '  <script type="module" src="js/catalogo.js?v=3"></script>',
+                      extra_head=f'\n  <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Cadastro, consulta e avaliação cega, sem necessidade de conta Google.">')
     (DOCS / "catalogo.html").write_text(catalogo, encoding="utf-8")
 
     (DOCS / "predicao.html").write_text(
