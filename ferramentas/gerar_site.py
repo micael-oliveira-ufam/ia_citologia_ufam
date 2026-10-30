@@ -138,7 +138,7 @@ def pagina(titulo, corpo, ativo, na_index, scripts, extra_head="", descricao=Non
   <meta name="theme-color" content="#0e6b7b">
   <link rel="icon" href="{ICONE}">
   <link rel="preload" href="fontes/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/site.css?v=2">
+  <link rel="stylesheet" href="css/site.css?v=3">
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
@@ -200,6 +200,91 @@ def tabela_matriz():
 
 
 # ------------------------------------------------------------------- seções
+
+def sec_inicio():
+    fontes = [
+        ("INCA, Diretrizes Brasileiras para o Rastreamento do Câncer do Colo do Útero (3ª ed., 2025)",
+         "https://ninho.inca.gov.br/jspui/bitstream/123456789/17858/3/Diretrizes%20para%20o%20Rastreamento%20do%20c%c3%a2ncer%20do%20colo%20do%20%c3%batero_2025_completo.pdf"),
+        ("INCA, Nota Técnica nº 1/2024 sobre o teste DNA-HPV",
+         "https://www.inca.gov.br/sites/ufu.sti.inca.local/files/media/document/nota_informativa_sobre_dna-hpv.pdf"),
+        ("OMS, Cervical cancer (fact sheet)", "https://www.who.int/news-room/fact-sheets/detail/cervical-cancer"),
+        ("Agência Brasil, 26/03/2025: SUS vai substituir o Papanicolau por exame mais sensível",
+         "https://agenciabrasil.ebc.com.br/saude/noticia/2025-03/sus-vai-substituir-papanicolau-por-exame-mais-sensivel-ainda-este-ano"),
+        ("Canaltech, 02/04/2024: vacina do HPV em dose única no SUS",
+         "https://canaltech.com.br/saude/vacina-do-hpv-vai-ser-aplicada-em-dose-unica-no-sus-284271/"),
+    ]
+    lista_fontes = "".join(f'<li><a href="{u}" target="_blank" rel="noopener">{e(t)}</a></li>' for t, u in fontes)
+    mitos = [
+        ("Já tomei a vacina, então não preciso fazer o exame.",
+         "Falso. A vacina não protege contra todos os tipos de HPV. O rastreamento continua necessário, mesmo para quem se vacinou."),
+        ("Só preciso fazer o exame se eu sentir alguma coisa.",
+         "Falso. O exame serve justamente para achar alterações antes de qualquer sintoma. Com sintomas, procure atendimento sem esperar a data do exame."),
+        ("Resultado alterado ou HPV positivo quer dizer que tenho câncer.",
+         "Falso. Na maioria das vezes significa apenas que é preciso acompanhar ou investigar melhor. Lesões iniciais têm tratamento simples."),
+        ("Tenho vergonha ou medo do exame.",
+         "É comum sentir isso. A coleta é rápida e você pode pedir à profissional que explique cada etapa. Em algumas situações de difícil acesso, a autocoleta pode ser oferecida pelo serviço."),
+    ]
+    mitos_html = "".join(f"<details class='mito'><summary>{e(a)}</summary><p>{e(b)}</p></details>" for a, b in mitos)
+    return f"""
+<section id="inicio" class="secao" data-secao-conteudo aria-labelledby="h-inicio">
+  <h2 id="h-inicio" class="titulo-secao">Rastreio do câncer do colo do útero: o exame que evita o câncer</h2>
+  <div class="colunas colunas--texto">
+    <div class="prosa">
+      <p>O câncer do colo do útero é, em quase todos os casos, consequência de uma infecção persistente por tipos de HPV de alto risco. Ele evolui devagar: antes de virar câncer, passa por alterações que o exame preventivo consegue encontrar. Por isso é um dos poucos cânceres que podem ser evitados com vacina e rastreamento.</p>
+      <p>Segundo a Estimativa 2026–2028 do INCA, ele está entre os cinco cânceres mais frequentes em mulheres no Brasil e permanece entre os mais incidentes nas regiões Norte e Nordeste, onde o acesso à vacinação e ao rastreamento ainda é desigual.</p>
+    </div>
+    <div class="pilha">
+      <div class="cartao"><div class="sobrancelha">Em uma frase</div>
+        <p class="fraco corpo-cartao">Vacinar aos 9–14 anos e fazer o exame de rastreio no tempo certo evita a maior parte dos casos e permite tratar cedo os que surgem.</p></div>
+      <div class="cartao"><div class="sobrancelha">Onde fazer</div>
+        <p class="fraco corpo-cartao">Na Unidade Básica de Saúde (UBS) mais próxima de você. O exame e a vacina são gratuitos no SUS.</p></div>
+    </div>
+  </div>
+
+  <h2 class="titulo-secao espaco">Três formas de se proteger</h2>
+  <div class="grade-3 grade-3--texto">
+    <div class="cartao"><h4>1. Vacina contra o HPV</h4>
+      <p class="fraco corpo-cartao">No SUS, meninas e meninos de 9 a 14 anos recebem dose única, de preferência antes do início da vida sexual. Quem tem até 19 anos e ainda não se vacinou pode receber conforme o estoque da região: pergunte na UBS. Pessoas imunocomprometidas seguem esquema com mais doses.</p></div>
+    <div class="cartao"><h4>2. Exame de rastreio</h4>
+      <p class="fraco corpo-cartao">As diretrizes do INCA (2025) indicam, para mulheres de 25 a 64 anos, o teste de DNA-HPV, repetido a cada 5 anos quando o resultado é negativo. A troca do Papanicolau pelo DNA-HPV é gradual e varia por cidade: onde o Papanicolau ainda é o exame ofertado, o intervalo usual era de 3 anos após dois exames anuais normais. Confirme na UBS qual exame e qual intervalo valem para você.</p></div>
+    <div class="cartao"><h4>3. Hábitos e cuidados</h4>
+      <p class="fraco corpo-cartao">O preservativo reduz o risco de infecção pelo HPV, embora não elimine totalmente. Não fumar diminui o risco entre mulheres com HPV. Infecções sexualmente transmissíveis devem ser investigadas e tratadas.</p></div>
+  </div>
+
+  <h2 class="titulo-secao espaco">Quem deve fazer o exame</h2>
+  <div class="prosa">
+    <ul>
+      <li><strong>Mulheres de 25 a 64 anos</strong> que já tiveram vida sexual. Antes dos 25 anos o rastreamento não é recomendado. Quem nunca fez o exame ou está atrasada deve ser a prioridade.</li>
+      <li><strong>Mulheres vacinadas</strong> também: a vacinação não dispensa o rastreamento.</li>
+      <li><strong>Acima de 60 anos:</strong> se o último teste foi negativo, o rastreamento pode ser encerrado; quem nunca fez deve fazer.</li>
+      <li><strong>HIV/aids ou imunossupressão:</strong> acompanhamento diferenciado, com intervalo de 3 anos após teste negativo.</li>
+      <li><strong>Gestantes</strong> podem fazer o exame no pré-natal. <strong>Após histerectomia</strong>, depende do motivo da cirurgia: converse com a equipe de saúde.</li>
+    </ul>
+  </div>
+
+  <h2 class="titulo-secao espaco">Recebi um resultado alterado. E agora?</h2>
+  <div class="prosa">
+    <p>Alteração não significa câncer. Nas diretrizes de 2025, quando o teste de DNA-HPV é positivo para os tipos 16 ou 18, a mulher é encaminhada direto para a colposcopia. Para os outros tipos de alto risco, faz-se uma citologia na mesma amostra para decidir entre colposcopia e novo teste em 12 meses. Siga a orientação da equipe e não deixe de voltar nas datas marcadas: é o seguimento que impede a progressão.</p>
+  </div>
+  <div class="aviso aviso--atencao"><strong>Sinais que merecem avaliação, mesmo com exame em dia:</strong> sangramento após a relação sexual, entre as menstruações ou depois da menopausa; corrimento diferente do habitual ou com mau cheiro; dor na pelve ou durante a relação. Têm várias causas possíveis, mas devem ser avaliados por um profissional.</div>
+
+  <h2 class="titulo-secao espaco">Mitos e verdades</h2>
+  <div class="mitos">{mitos_html}</div>
+
+  <h2 class="titulo-secao espaco">Como esta plataforma se encaixa</h2>
+  <div class="prosa">
+    <p>Depois que o exame é coletado, as células são examinadas ao microscópio por profissionais de citopatologia e classificadas pelo Sistema Bethesda. Esta plataforma é um projeto de pesquisa da UFAM e da SEMSA Manaus que explora o uso de inteligência artificial como apoio a essa leitura. Ela <strong>não emite laudo</strong> e não substitui o exame nem a avaliação profissional.</p>
+    <p class="botoes--linha acoes-inicio">
+      <a class="btn btn--grande" href="#analise">Experimentar a análise de imagem</a>
+      <a class="btn btn--sec" href="#bethesda">Entender o Sistema Bethesda</a>
+    </p>
+  </div>
+  <div class="aviso aviso--info">Conteúdo informativo, sem caráter de consulta médica. As orientações seguem as diretrizes do INCA, mas a implantação do teste de DNA-HPV varia por município: em caso de dúvida, procure a UBS.</div>
+  <p class="legenda">Fontes:</p>
+  <ul class="legenda lista-fontes">{lista_fontes}</ul>
+</section>
+"""
+
 
 def sec_analise():
     passos = [("Passo 1", "Carregue um campo", "Use o seletor acima ou abra uma das imagens de teste."),
@@ -506,9 +591,9 @@ def dados_js():
 
 
 def main():
-    corpo_index = "\n".join([sec_analise(), sec_bethesda(), sec_validacao(), sec_exemplos(), sec_equipe(), sec_dados()])
-    index = pagina(SEO_TITULO, corpo_index, "analise", True,
-                   '  <script type="module" src="js/app.js?v=2"></script>', extra_head=meta_seo())
+    corpo_index = "\n".join([sec_inicio(), sec_analise(), sec_bethesda(), sec_validacao(), sec_exemplos(), sec_equipe(), sec_dados()])
+    index = pagina(SEO_TITULO, corpo_index, "inicio", True,
+                   '  <script type="module" src="js/app.js?v=3"></script>', extra_head=meta_seo())
     (DOCS / "index.html").write_text(index, encoding="utf-8")
 
     cat = (Path(__file__).parent / "catalogo_corpo.html").read_text(encoding="utf-8")

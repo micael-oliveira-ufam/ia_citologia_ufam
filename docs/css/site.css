@@ -329,3 +329,12 @@ a, .citacao-ds, .ds-nome, .inst-nome { overflow-wrap: anywhere; }
 .previa { max-width: 100%; max-height: 220px; border-radius: 8px; margin-top: 6px; }
 dialog.visor--form { width: min(640px, 96vw); }
 .form-lamina input[type=text], .form-lamina input[type=date] { width: 100%; min-height: 42px; font: inherit; padding: .4rem .7rem; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie); color: var(--tinta); }
+
+/* ---- aba Início ---- */
+.mitos { display: grid; gap: 8px; max-width: 78ch; }
+.mito { border: 1px solid var(--linha); border-radius: 10px; background: var(--superficie); padding: 0 14px; }
+.mito summary { cursor: pointer; font-weight: 700; padding: 12px 0; min-height: 44px; }
+.mito p { margin: 0 0 12px; color: var(--tinta-fraca); }
+.acoes-inicio { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.acoes-inicio .btn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.lista-fontes { padding-left: 1.2rem; overflow-wrap: anywhere; }

@@ -1,6 +1,6 @@
 // Ponto de entrada da página principal: navegação por abas e módulo de análise.
 import { iniciarPagina } from './comum.js';
-import { iniciarNavegacao, irPara } from './navegacao.js';
+import { iniciarNavegacao, irPara } from './navegacao.js?v=3';
 import { iniciarAnalise } from './analise.js';
 
 iniciarPagina();

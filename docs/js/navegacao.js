@@ -4,7 +4,7 @@
 const SECOES = [...document.querySelectorAll('.secao')];
 const IDS = SECOES.map((s) => s.id);
 const ABAS = [...document.querySelectorAll('.abas a[data-secao]')];
-const PADRAO = 'analise';
+const PADRAO = 'inicio';
 
 function mostrar(id, { foco = false } = {}) {
   if (!IDS.includes(id)) id = PADRAO;

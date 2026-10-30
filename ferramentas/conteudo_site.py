@@ -255,6 +255,7 @@ SEO_PALAVRAS_CHAVE = [
 ]
 
 MENUS = [  # (id, rótulo)
+    ("inicio", "Início"),
     ("analise", "Análise"),
     ("bethesda", "Sistema Bethesda"),
     ("validacao", "Validação do algoritmo"),
