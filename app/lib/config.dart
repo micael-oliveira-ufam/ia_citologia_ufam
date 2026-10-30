@@ -24,10 +24,13 @@ const List<String> classesEsperadas = ['SCC', 'HSIL', 'LSIL', 'NILM'];
 /// A chave de API é a chave web pública do projeto (identifica o projeto, não
 /// é segredo); quem protege os dados são as regras do Firestore
 /// (veja firebase/firestore.rules.sugerido).
-const String firebaseProjeto = "gen-lang-client-0447277814";
-const String firebaseBanco = "ai-studio-citoatlaslabseba-4d2d79ae-46ba-4b4b-8813-8448586da766";
-const String firebaseChaveApi = "AIzaSyARQE9R_y8ZXGpl-rkWhpKiyp-wVwf3EpE";
+const String firebaseProjeto = "citoatlas";
+const String firebaseBanco = "(default)";
+const String firebaseChaveApi = "AIzaSyDIye72T8UWKS04vheKeFlQhZiofFoDY14";
 
+/// ATENÇÃO: este cliente OAuth é do projeto Firebase ANTERIOR (número 657710120359).
+/// Para o login Google funcionar com o projeto "citoatlas" (764790014755), troque pelo ID
+/// do cliente "Web" dele (Firebase > Authentication > Google, ou Google Cloud > Credenciais).
 /// ID do cliente OAuth "Web" do projeto. É o `serverClientId` do login Google:
 /// o token resultante é aceito pelo Firebase Auth.
 const String googleClienteWeb = "657710120359-e9ojdqbiv7dkcdpkols2maq2dd32et6e.apps.googleusercontent.com";
