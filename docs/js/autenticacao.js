@@ -8,7 +8,7 @@
 //
 // Requer ativar o provedor "Anônimo" em Firebase > Authentication > Método de login.
 
-import { FIREBASE } from './config.js';
+import { FIREBASE } from './config.js?v=4';
 
 const CHAVE_LS = 'citoatlas.anonimo.v1';
 const chave = encodeURIComponent(FIREBASE.apiKey);

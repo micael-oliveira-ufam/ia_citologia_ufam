@@ -7,8 +7,8 @@
 //   evaluations  id (= slideId_userId), slideId, userId, userName, userEmail,
 //                classification, morphologyDescription, notes, createdAt
 
-import { FIREBASE } from './config.js';
-import { token as tokenFirebase, uidAtual, entrar, ErroAutenticacao } from './autenticacao.js?v=3';
+import { FIREBASE } from './config.js?v=4';
+import { token as tokenFirebase, uidAtual, entrar, ErroAutenticacao } from './autenticacao.js?v=4';
 
 const RAIZ =
   `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}` +

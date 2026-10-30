@@ -1,11 +1,17 @@
+// Configuração pública do projeto Firebase "citoatlas" (banco Firestore padrão).
+// O site usa só a API REST do Firestore e do Authentication (sem o SDK do Firebase e
+// sem o Google Analytics, para não rastrear quem visita o site).
 // Configuração pública do projeto Firebase do CitoAtlas (a mesma chave web que já
 // vai no código do CitoAtlas original; chaves web do Firebase identificam o
 // projeto, não são segredo). Quem protege os dados são as REGRAS do Firestore:
 // veja firebase/firestore.rules.sugerido.
 export const FIREBASE = {
-  projectId: "gen-lang-client-0447277814",
-  databaseId: "ai-studio-citoatlaslabseba-4d2d79ae-46ba-4b4b-8813-8448586da766",
-  apiKey: "AIzaSyARQE9R_y8ZXGpl-rkWhpKiyp-wVwf3EpE",
+  projectId: "citoatlas",
+  databaseId: "(default)",
+  apiKey: "AIzaSyDIye72T8UWKS04vheKeFlQhZiofFoDY14",
+  authDomain: "citoatlas.firebaseapp.com",
+  storageBucket: "citoatlas.firebasestorage.app",
+  appId: "1:764790014755:web:6f9c761987f5f32fc40296",
 };
 
 // Repositório e site no GitHub (ajuste se o nome do repositório for outro).
