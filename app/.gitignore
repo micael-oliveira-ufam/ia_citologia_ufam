@@ -23,3 +23,6 @@ macos/
 linux/
 windows/
 web/
+*.jks
+*.keystore
+*.base64.txt

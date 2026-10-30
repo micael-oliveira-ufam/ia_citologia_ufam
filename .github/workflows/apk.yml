@@ -1,0 +1,105 @@
+# Gera o APK do aplicativo "Colo do Útero IA" na nuvem do GitHub.
+#
+# Como usar:
+#   • Manual: aba Actions > "Gerar APK" > Run workflow. Ao terminar, baixe os APKs em
+#     "Artifacts" no fim da página da execução.
+#   • Versão publicada: crie uma tag (ex.: git tag v1.0.0 && git push origin v1.0.0).
+#     Além do artefato, os APKs são anexados a uma Release do GitHub.
+#
+# Assinatura (opcional, mas necessária para atualizar o app por cima e para a Play Store):
+# cadastre em Settings > Secrets and variables > Actions os quatro segredos abaixo
+# (app/tools/criar_keystore.sh gera o arquivo e imprime os valores):
+#   ANDROID_KEYSTORE_BASE64   ANDROID_KEYSTORE_PASSWORD   ANDROID_KEY_ALIAS   ANDROID_KEY_PASSWORD
+# Sem eles o APK sai assinado com a chave de depuração (instala, mas não serve para a Play Store).
+name: Gerar APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      application_id:
+        description: "Pacote Android (applicationId). Vazio = padrão do projeto (br.ufam.fcf.colo_ia)"
+        required: false
+        default: ""
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # só a criação da Release (em tags) precisa de escrita
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Preparar a chave de assinatura (se houver segredos)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS_S: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ] && [ -n "$KEY_ALIAS_S" ] && [ -n "$KEY_PASS" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            {
+              echo "KEYSTORE_ARQUIVO=$RUNNER_TEMP/release.jks"
+              echo "KEYSTORE_SENHA=$KS_PASS"
+              echo "KEY_ALIAS=$KEY_ALIAS_S"
+              echo "KEY_SENHA=$KEY_PASS"
+            } >> "$GITHUB_ENV"
+            echo "Assinatura de release configurada."
+          else
+            echo "::warning::Segredos de assinatura ausentes: o APK será assinado com a chave de depuração."
+          fi
+
+      - name: Pacote Android personalizado (opcional)
+        if: ${{ github.event.inputs.application_id != '' }}
+        run: echo "APPLICATION_ID=${{ github.event.inputs.application_id }}" >> "$GITHUB_ENV"
+
+      - name: Testes do aplicativo (não bloqueiam o APK)
+        continue-on-error: true
+        run: |
+          flutter pub get
+          flutter test
+
+      - name: APKs por arquitetura
+        run: ./build_apk.sh
+
+      - name: APK universal
+        run: ./build_apk.sh --universal
+
+      - name: Conferir saída
+        run: |
+          ls -lh dist
+          test -n "$(ls dist/*.apk 2>/dev/null)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: colo-ia-apk
+          path: |
+            app/dist/*.apk
+            app/dist/*.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Anexar à Release (tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/dist/*.apk
+            app/dist/*.sha256

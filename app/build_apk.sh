@@ -10,6 +10,8 @@
 # O modelo ONNX da citologia NÃO vai no APK: o aplicativo o baixa do GitHub
 # Pages na primeira vez que o profissional pede (precisa de internet nessa vez).
 #
+# Pacote Android diferente do padrão (br.ufam.fcf.colo_ia): APPLICATION_ID=br.ufam.coloia ./build_apk.sh
+#
 # Assinatura de release (opcional): exporte as quatro variáveis abaixo e o
 # script escreve o android/key.properties para você.
 #   KEYSTORE_ARQUIVO  KEYSTORE_SENHA  KEY_ALIAS  KEY_SENHA
@@ -130,6 +132,7 @@ fi
 
 # Assinatura própria, se as variáveis estiverem definidas.
 if [ -n "${KEYSTORE_ARQUIVO:-}" ]; then
+  KEYSTORE_ARQUIVO="$(cd "$(dirname "$KEYSTORE_ARQUIVO")" && pwd)/$(basename "$KEYSTORE_ARQUIVO")"
   cat > android/key.properties <<PROPS
 storeFile=$KEYSTORE_ARQUIVO
 storePassword=${KEYSTORE_SENHA:-}
@@ -137,7 +140,7 @@ keyAlias=${KEY_ALIAS:-}
 keyPassword=${KEY_SENHA:-}
 PROPS
   ok "android/key.properties escrito"
-  aviso "confirme que android/app/build.gradle lê esse arquivo no buildType release"
+  ok "o build de release assina com essa chave (tools/ajustar_plataformas.py configura o gradle)"
 else
   [ "$MODO" = "release" ] && aviso \
     "sem keystore configurado: o APK sairá assinado com a chave de depuração, válido só para instalação manual"

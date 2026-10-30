@@ -119,6 +119,28 @@ Runtime), aplica a regra de ProGuard, ajusta o nome do app, garante a permissão
 (necessária ao download do modelo e ao catálogo) e a confere no APK. Sem keystore,
 o APK sai assinado com a chave de depuração: serve para instalação manual, não para a Play Store.
 
+#### APK pela nuvem do GitHub (sem instalar nada)
+
+O workflow `.github/workflows/apk.yml` compila o APK nos servidores do GitHub:
+
+1. No GitHub: aba **Actions → Gerar APK → Run workflow** (o campo de pacote pode ficar vazio).
+2. Quando terminar (cerca de 10 a 20 min), abra a execução e baixe **colo-ia-apk** em *Artifacts*
+   (APKs por arquitetura, o universal e os `.sha256`).
+3. Para publicar uma versão: `git tag v1.0.0 && git push origin v1.0.0`; os APKs vão também para a aba *Releases*.
+
+Pacote Android padrão: `br.ufam.fcf.colo_ia`. Para outro (ex.: `br.ufam.coloia`), informe no campo
+do workflow ou rode `APPLICATION_ID=br.ufam.coloia ./build_apk.sh`. Defina antes de publicar na Play Store:
+depois disso ele não pode mais ser trocado.
+
+**Assinatura própria** (necessária para atualizar o app por cima e para a Play Store): rode
+`app/tools/criar_keystore.sh` no seu computador (as senhas são digitadas só ali), cadastre os 4 segredos que ele
+imprime (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`)
+em *Settings → Secrets and variables → Actions* e guarde o `.jks` e as senhas num local seguro: se perder a chave, não
+dá mais para atualizar o app. Sem os segredos o APK sai com a chave de depuração, bom para testar em aparelhos.
+
+Limite honesto: o script e o workflow não foram executados com o Flutter real (o ambiente onde foram escritos
+não alcança o Flutter/Android SDK). A primeira execução na nuvem pode pedir pequenos ajustes.
+
 ### 3. iOS
 
 ```bash
