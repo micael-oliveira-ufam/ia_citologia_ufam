@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/bethesda.dart';
+import '../versao.dart';
 import '../data/projeto.dart';
 import '../perfil.dart';
 import '../servicos/modelo_risco.dart';
@@ -47,6 +48,18 @@ class TelaSobre extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Sobre o projeto'),
+          actions: [
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Text(
+                  'v$versaoNome ($versaoBuild)',
+                  style: const TextStyle(fontSize: 12, color: Cores.tintaFraca),
+                  semanticsLabel: 'Versão $versaoCompleta',
+                ),
+              ),
+            ),
+          ],
           bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,

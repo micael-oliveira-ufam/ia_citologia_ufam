@@ -72,6 +72,14 @@ def navegacao(ativo, na_index):
     return f'<nav class="abas" aria-label="Seções do site">{"".join(itens)}</nav>'
 
 
+def versao_site():
+    import re as _re
+    from pathlib import Path as _P
+    texto = (_P(__file__).resolve().parent.parent / "VERSAO").read_text(encoding="utf-8").strip()
+    m = _re.match(r"^(\d+\.\d+\.\d+)\+(\d+)$", texto)
+    return f"v{m.group(1)} (build {m.group(2)})" if m else texto
+
+
 def rodape():
     return f"""
 <footer class="rodape">
@@ -80,11 +88,11 @@ def rodape():
     Faculdade de Ciências Farmacêuticas e Instituto de Computação · UFAM<br>
     Secretaria Municipal de Saúde de Manaus · Laboratório Sebastião Marinho<br>
     <a href="{URL_REPO}" target="_blank" rel="noopener">Código-fonte no GitHub</a> ·
-    <a href="{URL_REPO}/releases" target="_blank" rel="noopener">Aplicativo Android/iOS</a> ·
+    <a href="{URL_REPO}/releases" target="_blank" rel="noopener">Aplicativo CitoIlumina (Android/iOS)</a> ·
     <a href="{URL_STREAMLIT}" target="_blank" rel="noopener">Versão anterior (Streamlit)</a>
   </div>
   <div class="rodape-dir">
-    <span class="ano">© {ANO_DESENVOLVIMENTO}</span> · Projeto de pesquisa acadêmica<br>
+    <span class="ano">© {ANO_DESENVOLVIMENTO}</span> · Projeto de pesquisa acadêmica · Versão {versao_site()}<br>
     Modelo <code>ConvNeXt Large</code> · IARC Digital Atlas e Mendeley Data<br>
     Sem aprovação de CEP · Não emite laudo<br>
     <span class="rodape-mini">Código desenvolvido com apoio de Claude Opus 5 (Anthropic)</span>
@@ -301,12 +309,12 @@ def sec_analise():
       <div class="zona" id="zona">
         <img class="zona__previa" id="previa-mini" alt="" hidden>
         <p class="zona__rotulo"><strong>Carregue a lâmina digitalizada</strong></p>
-        <p class="pequeno">Arraste uma imagem para cá ou escolha abaixo. Um campo digitalizado por vez. <strong>Não envie imagens de pacientes.</strong></p>
+        <p class="pequeno">Arraste uma ou <strong>várias imagens</strong> para cá, ou escolha abaixo. Com mais de uma, todas são analisadas em lote. <strong>Não envie imagens de pacientes.</strong></p>
         <div class="botoes">
-          <label class="btn" for="arquivo">Escolher imagem</label>
+          <label class="btn" for="arquivo">Escolher imagem(ns)</label>
           <label class="btn btn--sec" for="camera">Usar a câmera</label>
         </div>
-        <input class="so-leitor" type="file" id="arquivo" accept="image/*">
+        <input class="so-leitor" type="file" id="arquivo" accept="image/*" multiple>
         <input class="so-leitor" type="file" id="camera" accept="image/*" capture="environment">
       </div>
     </div>
@@ -323,6 +331,21 @@ def sec_analise():
         <button class="btn btn--sec btn--mini" id="modelo-remover" type="button" hidden>Remover o modelo deste navegador</button>
       </div>
     </div>
+  </div>
+    <div id="painel-lote" class="cartao" hidden>
+    <h3>Análise em lote</h3>
+    <p id="lote-resumo" class="pequeno"></p>
+    <div class="botoes botoes--linha">
+      <button class="btn btn--grande" id="lote-analisar" type="button">Analisar todas</button>
+      <button class="btn btn--sec" id="lote-exportar" type="button" disabled>Baixar CSV</button>
+      <button class="btn btn--sec" id="lote-limpar" type="button">Limpar</button>
+    </div>
+    <progress id="lote-progresso" max="1" hidden aria-label="Progresso do lote"></progress>
+    <p id="lote-estado" class="pequeno" role="status" aria-live="polite"></p>
+    <div class="tabela-rolagem"><table class="tabela" id="lote-tabela">
+      <thead><tr><th>Imagem</th><th>Arquivo</th><th>Resultado</th><th>Confiança</th><th></th></tr></thead>
+      <tbody id="lote-corpo-analise"></tbody>
+    </table></div>
   </div>
   <hr>
   <div id="painel-imagem" class="colunas colunas--imagem" hidden>
@@ -593,12 +616,12 @@ def dados_js():
 def main():
     corpo_index = "\n".join([sec_inicio(), sec_analise(), sec_bethesda(), sec_validacao(), sec_exemplos(), sec_equipe(), sec_dados()])
     index = pagina(SEO_TITULO, corpo_index, "inicio", True,
-                   '  <script type="module" src="js/app.js?v=3"></script>', extra_head=meta_seo())
+                   '  <script type="module" src="js/app.js?v=4"></script>', extra_head=meta_seo())
     (DOCS / "index.html").write_text(index, encoding="utf-8")
 
     cat = (Path(__file__).parent / "catalogo_corpo.html").read_text(encoding="utf-8")
     catalogo = pagina("Catálogo de lâminas | " + SEO_TITULO, cat, "catalogo", False,
-                      '  <script type="module" src="js/catalogo.js?v=5"></script>',
+                      '  <script type="module" src="js/catalogo.js?v=6"></script>',
                       extra_head=f'\n  <meta name="description" content="Catálogo eletrônico de lâminas de citopatologia cervical do Laboratório Prof. Sebastião Marinho (UFAM / SEMSA). Cadastro, consulta e avaliação cega, sem necessidade de conta Google.">')
     (DOCS / "catalogo.html").write_text(catalogo, encoding="utf-8")
 

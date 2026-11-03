@@ -122,12 +122,12 @@
       <div class="zona" id="zona">
         <img class="zona__previa" id="previa-mini" alt="" hidden>
         <p class="zona__rotulo"><strong>Carregue a lâmina digitalizada</strong></p>
-        <p class="pequeno">Arraste uma imagem para cá ou escolha abaixo. Um campo digitalizado por vez. <strong>Não envie imagens de pacientes.</strong></p>
+        <p class="pequeno">Arraste uma ou <strong>várias imagens</strong> para cá, ou escolha abaixo. Com mais de uma, todas são analisadas em lote. <strong>Não envie imagens de pacientes.</strong></p>
         <div class="botoes">
-          <label class="btn" for="arquivo">Escolher imagem</label>
+          <label class="btn" for="arquivo">Escolher imagem(ns)</label>
           <label class="btn btn--sec" for="camera">Usar a câmera</label>
         </div>
-        <input class="so-leitor" type="file" id="arquivo" accept="image/*">
+        <input class="so-leitor" type="file" id="arquivo" accept="image/*" multiple>
         <input class="so-leitor" type="file" id="camera" accept="image/*" capture="environment">
       </div>
     </div>
@@ -144,6 +144,21 @@
         <button class="btn btn--sec btn--mini" id="modelo-remover" type="button" hidden>Remover o modelo deste navegador</button>
       </div>
     </div>
+  </div>
+    <div id="painel-lote" class="cartao" hidden>
+    <h3>Análise em lote</h3>
+    <p id="lote-resumo" class="pequeno"></p>
+    <div class="botoes botoes--linha">
+      <button class="btn btn--grande" id="lote-analisar" type="button">Analisar todas</button>
+      <button class="btn btn--sec" id="lote-exportar" type="button" disabled>Baixar CSV</button>
+      <button class="btn btn--sec" id="lote-limpar" type="button">Limpar</button>
+    </div>
+    <progress id="lote-progresso" max="1" hidden aria-label="Progresso do lote"></progress>
+    <p id="lote-estado" class="pequeno" role="status" aria-live="polite"></p>
+    <div class="tabela-rolagem"><table class="tabela" id="lote-tabela">
+      <thead><tr><th>Imagem</th><th>Arquivo</th><th>Resultado</th><th>Confiança</th><th></th></tr></thead>
+      <tbody id="lote-corpo-analise"></tbody>
+    </table></div>
   </div>
   <hr>
   <div id="painel-imagem" class="colunas colunas--imagem" hidden>
@@ -459,17 +474,17 @@
     Faculdade de Ciências Farmacêuticas e Instituto de Computação · UFAM<br>
     Secretaria Municipal de Saúde de Manaus · Laboratório Sebastião Marinho<br>
     <a href="https://github.com/micael-oliveira-ufam/ia_citologia_ufam" target="_blank" rel="noopener">Código-fonte no GitHub</a> ·
-    <a href="https://github.com/micael-oliveira-ufam/ia_citologia_ufam/releases" target="_blank" rel="noopener">Aplicativo Android/iOS</a> ·
+    <a href="https://github.com/micael-oliveira-ufam/ia_citologia_ufam/releases" target="_blank" rel="noopener">Aplicativo CitoIlumina (Android/iOS)</a> ·
     <a href="https://ia-citologia-ufam.streamlit.app/" target="_blank" rel="noopener">Versão anterior (Streamlit)</a>
   </div>
   <div class="rodape-dir">
-    <span class="ano">© 2026</span> · Projeto de pesquisa acadêmica<br>
+    <span class="ano">© 2026</span> · Projeto de pesquisa acadêmica · Versão v1.1.0 (build 2)<br>
     Modelo <code>ConvNeXt Large</code> · IARC Digital Atlas e Mendeley Data<br>
     Sem aprovação de CEP · Não emite laudo<br>
     <span class="rodape-mini">Código desenvolvido com apoio de Claude Opus 5 (Anthropic)</span>
   </div>
 </footer>
   </div>
-  <script type="module" src="js/app.js?v=3"></script>
+  <script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>

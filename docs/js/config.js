@@ -29,3 +29,8 @@ export const CATALOGO = {
 export const MODELO = {
   manifesto: new URL('../model/manifesto.json', import.meta.url).href,
 };
+
+// Validador externo (terceiros): ferramenta independente de leitura de citologia cervical.
+// Sem API pública documentada: o fluxo é guiado (baixar a imagem, abrir o site e registrar
+// aqui o resultado). Nada é enviado automaticamente.
+export const VALIDADOR_EXTERNO = 'https://cervical-screening.pythonaisolutions.com/';

@@ -5,13 +5,17 @@
 // o que ele mesmo cadastrou (no formulário de edição) e cada pessoa só vê a
 // própria avaliação. Todo texto vindo do banco entra na página por textContent.
 
-import { CATALOGO } from './config.js';
+import { CATALOGO, VALIDADOR_EXTERNO } from './config.js?v=5';
 import { $, el, limpar, formatarData, idPublico, urlImagemSegura, iniciarPagina } from './comum.js';
 import {
   listarLaminas, contarVotos, minhasAvaliacoes, proximoId, criarLamina, atualizarLamina,
-  excluirLamina, salvarAvaliacao, entrar, uidAtual, ErroFirestore,
-} from './firestore.js?v=4';
-import { comprimirImagem } from './imagem.js?v=4';
+  excluirLamina, salvarAvaliacao, salvarComplementoAvaliacao, entrar, uidAtual, ErroFirestore,
+} from './firestore.js?v=5';
+import { comprimirImagem } from './imagem.js?v=5';
+import {
+  situacaoModelo, carregarModelo, modeloPronto, classificarLote, blobDeDataUrl, csv, baixarTexto,
+} from './ia.js?v=5';
+import { CATEGORIAS } from './bethesda.js';
 
 const CLASSES = [
   ['NILM', 'Negativo para Lesão ou Malignidade'],
@@ -36,6 +40,8 @@ const estado = {
   votosCompleto: true,
   erro: null,
   minhas: new Map(), // slideId -> minha avaliação
+  selecionadas: new Set(),
+  revelarIA: false, // o usuário aceitou ver a IA antes de avaliar (pode influenciar a avaliação cega)
 };
 
 const grade = $('#grade');
@@ -142,7 +148,7 @@ function cartao(l) {
   const n = votosDe(l);
   const selo = seloVotos(n);
   const url = urlImagemSegura(l.imageUrl);
-  return el('button', {
+  const botao = el('button', {
     class: 'lamina', type: 'button',
     'aria-label': `Abrir ${id.texto}`,
     onclick: () => abrirVisor(l),
@@ -156,6 +162,14 @@ function cartao(l) {
       el('span', { class: 'lamina__id', title: id.oculto ? 'ID original ocultado por privacidade' : null }, id.texto),
       el('span', { class: 'lamina__data' }, formatarData(l.date || l.createdAt))),
     el('span', { class: `votos ${selo.classe}` }, selo.texto)));
+  const caixa = el('input', {
+    type: 'checkbox', checked: estado.selecionadas.has(l.id), 'aria-label': `Selecionar ${id.texto} para análise em lote`,
+    onchange: (ev) => {
+      if (ev.target.checked) estado.selecionadas.add(l.id); else estado.selecionadas.delete(l.id);
+      atualizarBarraSelecao();
+    },
+  });
+  return el('div', { class: 'lamina-wrap' }, botao, el('label', { class: 'sel', title: 'Selecionar para análise em lote' }, caixa, 'Selecionar'));
 }
 
 function renderizar() {
@@ -170,6 +184,7 @@ function renderizar() {
   else mostrarStatus(null);
 
   maisBtn.hidden = estado.fim || estado.carregando || !!estado.erro;
+  atualizarBarraSelecao();
 }
 
 function atualizarNotaVotos() {
@@ -367,6 +382,7 @@ function desenharPainel(refazer = false) {
       el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: () => abrirFormulario(l) }, 'Editar minha lâmina'),
       el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: (ev) => confirmarExclusao(ev.currentTarget, l, falha) }, 'Excluir minha lâmina')));
   }
+  painelEl.append(painelAnalises(l, minha, falha));
   painelEl.append(caixa);
 }
 
@@ -394,6 +410,287 @@ function atualizarInfoVisor() {
     `Data: ${formatarData(atual.date || atual.createdAt)} · ${seloVotos(votosDe(atual)).texto} · ` +
     'A classificação fica oculta: a avaliação é cega.';
 }
+
+// ------------------------------------------------ IA, validação externa, comparação
+
+const CLASSES_MODELO = new Set(['SCC', 'HSIL', 'LSIL', 'NILM']);
+const pct = (v) => `${(v * 100).toFixed(1).replace('.', ',')}%`;
+
+/** O modelo só conhece 4 classes; as demais das 8 do CitoAtlas não têm equivalente direto. */
+function comparar(a, b) {
+  if (!a || !b) return null;
+  if (!CLASSES_MODELO.has(a) || !CLASSES_MODELO.has(b)) return 'sem equivalente direto';
+  return a === b ? 'concordam' : 'divergem';
+}
+
+/** Mostra o estado do carregamento da IA numa caixa de mensagem + barra de progresso. */
+async function prepararIA(msgEl, progEl) {
+  if (modeloPronto()) return true;
+  try {
+    const s = await situacaoModelo();
+    msgEl.textContent = s.emCache
+      ? 'Abrindo a IA neste navegador…'
+      : `Baixando a IA (${s.tamanhoTexto}) uma única vez; depois fica guardada neste navegador…`;
+    progEl.hidden = false;
+    progEl.removeAttribute('value');
+    await carregarModelo({
+      aoProgredir: (r, t) => {
+        progEl.max = t; progEl.value = r;
+        msgEl.textContent = `Baixando a IA: ${Math.round((r / t) * 100)}%`;
+      },
+    });
+    msgEl.textContent = 'IA pronta. A análise roda neste aparelho; nenhuma imagem sai do navegador.';
+    return true;
+  } catch (e) {
+    msgEl.textContent = e.message || String(e);
+    return false;
+  } finally {
+    progEl.hidden = true;
+  }
+}
+
+function resumoIA(r) {
+  const info = CATEGORIAS[r.sigla];
+  return el('div', { class: 'ia-res', style: `--c:${info?.cor || '#555'}` },
+    el('div', {}, el('strong', {}, `${r.sigla}`), ` · ${info?.nome || ''} · confiança `, el('strong', {}, pct(r.confianca))),
+    r.instavel ? el('div', { class: 'pequeno' }, 'Predição de baixa confiança: trate como indefinida.') : null);
+}
+
+/** Painel "Análises": humana (já acima), IA interna, validação externa e comparação. */
+function painelAnalises(l, minha, falha) {
+  const caixa = el('section', { class: 'analises', 'aria-label': 'Análises da lâmina' });
+  const podeVerIA = !!minha || souCriador(l) || estado.revelarIA;
+
+  // --- IA interna
+  const iaMsg = el('p', { class: 'pequeno', role: 'status' });
+  const iaProg = el('progress', { max: 100, hidden: true, 'aria-label': 'Progresso' });
+  const iaSaida = el('div', {});
+  const rodar = el('button', { class: 'btn btn--sec btn--mini', type: 'button' },
+    podeVerIA ? 'Analisar com a IA' : 'Analisar com a IA (revela a sugestão)');
+  rodar.addEventListener('click', async () => {
+    if (!podeVerIA) {
+      if (rodar.dataset.confirmar !== '1') {
+        rodar.dataset.confirmar = '1';
+        rodar.textContent = 'Confirmar: ver a IA antes de avaliar pode influenciar a sua avaliação cega';
+        return;
+      }
+      estado.revelarIA = true;
+    }
+    rodar.disabled = true;
+    limpar(iaSaida);
+    try {
+      if (!(await prepararIA(iaMsg, iaProg))) return;
+      iaMsg.textContent = 'Analisando…';
+      const blob = await blobDeDataUrl(urlImagemSegura(l.imageUrl));
+      const [{ resultado, erro }] = await classificarLote([blob]);
+      if (erro) { iaMsg.textContent = erro; return; }
+      iaMsg.textContent = '';
+      iaSaida.append(resumoIA(resultado));
+      if (minha) {
+        const novo = await salvarComplementoAvaliacao(l.id, {
+          aiClassification: resultado.sigla, aiConfidence: Math.round(resultado.confianca * 1000) / 1000,
+          aiModelVersion: 'colo-ia-web',
+        });
+        estado.minhas.set(l.id, { ...minha, ...novo });
+        iaSaida.append(el('p', { class: 'pequeno' }, 'Resultado registrado na sua avaliação para comparação.'));
+        desenharComparacao();
+      }
+    } catch (e) { falha(e); } finally { rodar.disabled = false; }
+  });
+  caixa.append(el('div', { class: 'cartao analise' },
+    el('h4', {}, 'Análise por IA (algoritmo interno)'),
+    el('p', { class: 'pequeno' }, 'O mesmo modelo da aba Análise (ConvNeXt, 4 classes), executado neste navegador. Apoio à leitura, não é laudo.'),
+    el('p', { class: 'pequeno' }, minha || souCriador(l)
+      ? 'Na primeira vez a IA (cerca de 188 MB) é baixada e fica guardada neste navegador.'
+      : 'Para manter a avaliação cega, avalie a lâmina primeiro: depois a sugestão da IA é liberada. Na primeira vez a IA (cerca de 188 MB) é baixada.'),
+    rodar, iaMsg, iaProg, iaSaida));
+
+  // --- validação externa
+  const ext = el('div', { class: 'cartao analise' }, el('h4', {}, 'Validação externa (outro algoritmo)'));
+  ext.append(el('p', { class: 'pequeno' },
+    'Compare com um validador independente: ',
+    el('a', { href: VALIDADOR_EXTERNO, target: '_blank', rel: 'noopener noreferrer' }, 'cervical-screening.pythonaisolutions.com'),
+    '. Ele é de terceiros: a imagem sai deste site quando você a envia lá, e vale a política daquele serviço. ' +
+    'Use só imagens sem dados de pacientes.'));
+  if (!minha) {
+    ext.append(el('p', { class: 'pequeno' }, 'Disponível depois da sua avaliação humana, para não influenciá-la.'));
+  } else {
+    const baixar = el('button', { class: 'btn btn--sec btn--mini', type: 'button',
+      onclick: async () => {
+        try {
+          const blob = await blobDeDataUrl(urlImagemSegura(l.imageUrl));
+          const url = URL.createObjectURL(blob);
+          const a = Object.assign(document.createElement('a'), { href: url, download: `${idPublico(l.patientId).texto.replace(/\s+/g, '_')}.jpg` });
+          document.body.append(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+        } catch (e) { falha(e); }
+      } }, '1. Baixar a imagem da lâmina');
+    const abrir = el('a', { class: 'btn btn--sec btn--mini', href: VALIDADOR_EXTERNO, target: '_blank', rel: 'noopener noreferrer' },
+      '2. Abrir o validador externo');
+    const sel = el('select', { 'aria-label': 'Resultado do validador externo' },
+      el('option', { value: '' }, '3. Resultado que o validador deu…'),
+      ...CLASSES.map(([sig, nome]) => el('option', { value: sig }, `${sig} — ${nome}`)),
+      el('option', { value: 'Inconclusivo' }, 'Inconclusivo / sem resultado'));
+    sel.value = minha.externalClassification || '';
+    const registrar = el('button', { class: 'btn btn--mini', type: 'button',
+      onclick: async () => {
+        if (!sel.value) return;
+        registrar.disabled = true;
+        try {
+          const novo = await salvarComplementoAvaliacao(l.id, { externalClassification: sel.value });
+          estado.minhas.set(l.id, { ...minha, ...novo });
+          desenharComparacao();
+        } catch (e) { falha(e); } finally { registrar.disabled = false; }
+      } }, 'Registrar resultado externo');
+    ext.append(el('div', { class: 'acoes-dono' }, baixar, abrir), el('div', { class: 'acoes-dono' }, sel, registrar));
+  }
+  caixa.append(ext);
+
+  // --- comparação
+  const comp = el('div', { class: 'cartao analise', id: 'comparacao' });
+  function desenharComparacao() {
+    limpar(comp);
+    const m = estado.minhas.get(l.id);
+    comp.append(el('h4', {}, 'Comparação das análises'));
+    if (!m) { comp.append(el('p', { class: 'pequeno' }, 'Avalie a lâmina para liberar a comparação entre humano, IA e validador externo.')); return; }
+    const linhas = [
+      ['Análise humana (sua)', m.classification],
+      ['IA interna', m.aiClassification ? `${m.aiClassification}${m.aiConfidence ? ` (${pct(m.aiConfidence)})` : ''}` : null],
+      ['Validador externo', m.externalClassification || null],
+    ];
+    comp.append(el('table', { class: 'tabela' }, el('tbody', {}, ...linhas.map(([a, b]) =>
+      el('tr', {}, el('td', {}, a), el('td', {}, el('strong', {}, b || 'ainda não feita'))))))); 
+    const hi = comparar(m.classification, m.aiClassification);
+    const he = comparar(m.classification, m.externalClassification === 'Inconclusivo' ? null : m.externalClassification);
+    const ie = comparar(m.aiClassification, m.externalClassification === 'Inconclusivo' ? null : m.externalClassification);
+    const notas = [['humano × IA', hi], ['humano × externo', he], ['IA × externo', ie]].filter(([, v]) => v);
+    if (notas.length) {
+      comp.append(el('p', { class: 'pequeno' }, notas.map(([k, v]) => `${k}: ${v}`).join(' · ')));
+      comp.append(el('p', { class: 'legenda' }, 'O modelo só distingue NILM, LSIL, HSIL e SCC; ASC-US, ASC-H, Adenocarcinoma e Outro não têm equivalente direto.'));
+    }
+  }
+  desenharComparacao();
+  caixa.append(comp);
+  return caixa;
+}
+
+// ---------------------------------------------------- seleção e análise em lote
+
+const barraSel = $('#selecao');
+const selTexto = $('#selecao-texto');
+const selAnalisar = $('#selecao-analisar');
+
+function atualizarBarraSelecao() {
+  const n = estado.selecionadas.size;
+  barraSel.hidden = estado.laminas.length === 0;
+  selTexto.textContent = n === 0 ? 'Nenhuma lâmina selecionada' : `${n} lâmina${n > 1 ? 's' : ''} selecionada${n > 1 ? 's' : ''}`;
+  selAnalisar.disabled = n === 0;
+  $('#selecao-limpar').disabled = n === 0;
+}
+
+$('#selecao-todas').addEventListener('click', () => {
+  for (const l of filtradas()) estado.selecionadas.add(l.id);
+  for (const c of grade.querySelectorAll('.sel input')) c.checked = true;
+  atualizarBarraSelecao();
+});
+$('#selecao-limpar').addEventListener('click', () => {
+  estado.selecionadas.clear();
+  for (const c of grade.querySelectorAll('.sel input')) c.checked = false;
+  atualizarBarraSelecao();
+});
+
+const loteDlg = $('#lote');
+const loteCorpo = $('#lote-corpo');
+const loteMsg = $('#lote-msg');
+const loteProg = $('#lote-prog');
+const loteIncluir = $('#lote-incluir');
+const loteRodar = $('#lote-rodar');
+const loteCsv = $('#lote-csv');
+let loteLinhas = [];
+
+function lamPorId(id) { return estado.laminas.find((x) => x.id === id); }
+const podeVerIAde = (l) => estado.minhas.has(l.id) || souCriador(l) || loteIncluir.checked;
+
+function desenharLote() {
+  limpar(loteCorpo);
+  loteLinhas = [...estado.selecionadas].map(lamPorId).filter(Boolean).map((l) => ({ l, r: null, erro: null }));
+  const corpo = el('tbody', {});
+  loteLinhas.forEach((lin, i) => {
+    const id = idPublico(lin.l.patientId);
+    lin.celula = el('td', { class: 'lote-res' }, '—');
+    corpo.append(el('tr', {},
+      el('td', {}, el('img', { class: 'lote-mini', src: urlImagemSegura(lin.l.imageUrl), alt: '' })),
+      el('td', {}, id.texto),
+      el('td', {}, estado.minhas.has(lin.l.id) ? 'sim' : 'não'),
+      lin.celula));
+  });
+  loteCorpo.append(el('div', { class: 'tabela-rolagem' }, el('table', { class: 'tabela' },
+    el('thead', {}, el('tr', {}, el('th', {}, 'Imagem'), el('th', {}, 'ID'), el('th', {}, 'Avaliada por você'), el('th', {}, 'IA interna'))),
+    corpo)));
+  loteCsv.disabled = true;
+}
+
+function celulaResultado(lin) {
+  limpar(lin.celula);
+  if (lin.erro) { lin.celula.textContent = lin.erro; return; }
+  if (!lin.r) { lin.celula.textContent = lin.oculto ? 'oculto: avalie a lâmina primeiro' : '—'; return; }
+  const info = CATEGORIAS[lin.r.sigla];
+  lin.celula.append(el('strong', { style: `color:${info?.cor || 'inherit'}` }, lin.r.sigla), ` ${pct(lin.r.confianca)}`,
+    lin.r.instavel ? ' · baixa confiança' : '');
+}
+
+$('#selecao-analisar').addEventListener('click', () => {
+  loteIncluir.checked = estado.revelarIA;
+  loteMsg.textContent = '';
+  desenharLote();
+  loteDlg.showModal();
+});
+$('#lote-fechar').addEventListener('click', () => loteDlg.close());
+loteIncluir.addEventListener('change', () => { estado.revelarIA = loteIncluir.checked; });
+
+loteRodar.addEventListener('click', async () => {
+  loteRodar.disabled = true;
+  try {
+    if (!(await prepararIA(loteMsg, loteProg))) return;
+    const ativas = loteLinhas.filter((lin) => {
+      lin.r = null; lin.erro = null; lin.oculto = !podeVerIAde(lin.l);
+      celulaResultado(lin);
+      return !lin.oculto;
+    });
+    if (ativas.length === 0) {
+      loteMsg.textContent = 'Nenhuma das lâminas selecionadas pode ser analisada agora: avalie-as primeiro ou marque a opção de incluir as não avaliadas.';
+      return;
+    }
+    const blobs = [];
+    for (const lin of ativas) blobs.push(await blobDeDataUrl(urlImagemSegura(lin.l.imageUrl)));
+    loteProg.hidden = false; loteProg.max = ativas.length; loteProg.value = 0;
+    await classificarLote(blobs, {
+      aoItem: (i, r, erro) => {
+        ativas[i].r = r; ativas[i].erro = erro; celulaResultado(ativas[i]);
+        loteProg.value = i + 1;
+        loteMsg.textContent = `Analisadas ${i + 1} de ${ativas.length}…`;
+      },
+    });
+    loteMsg.textContent = `Concluído: ${ativas.length} lâmina(s) analisada(s) pela IA neste aparelho.` +
+      (ativas.length < loteLinhas.length ? ` ${loteLinhas.length - ativas.length} ficaram ocultas para preservar a avaliação cega.` : '');
+    loteCsv.disabled = false;
+  } catch (e) {
+    loteMsg.textContent = e.message || String(e);
+  } finally {
+    loteProg.hidden = true;
+    loteRodar.disabled = false;
+  }
+});
+
+loteCsv.addEventListener('click', () => {
+  const linhas = [['ID', 'Data', 'Avaliada por você', 'IA: classe', 'IA: confiança', 'IA: baixa confiança']];
+  for (const lin of loteLinhas) {
+    if (!lin.r) continue;
+    linhas.push([idPublico(lin.l.patientId).texto, lin.l.date || '', estado.minhas.has(lin.l.id) ? 'sim' : 'não',
+      lin.r.sigla, lin.r.confianca.toFixed(4).replace('.', ','), lin.r.instavel ? 'sim' : 'não']);
+  }
+  baixarTexto('analise-ia-catalogo.csv', csv(linhas));
+});
 
 // ----------------------------------------------------------- cadastro/edição
 

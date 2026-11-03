@@ -113,8 +113,9 @@ export function iniciarAnalise({ irPara }) {
     } catch (_) { return null; }
   }
 
-  async function escolherImagem(blob, { nome, referencia = null, descricao = null }) {
+  async function escolherImagem(blob, { nome, referencia = null, descricao = null, manterLote = false }) {
     if (estado.urlPrevia) URL.revokeObjectURL(estado.urlPrevia);
+    if (!manterLote) limparLote();
     estado.imagem = blob;
     estado.nome = nome;
     estado.referencia = referencia;
@@ -153,14 +154,23 @@ export function iniciarAnalise({ irPara }) {
   ui.limpar.addEventListener('click', limparImagem);
 
   async function aoEscolherArquivo(e) {
-    const f = e.target.files?.[0];
+    const arquivos = [...(e.target.files || [])];
     e.target.value = '';
-    if (!f) return;
-    if (!f.type.startsWith('image/')) {
-      mostrarErro('Esse arquivo não é uma imagem. Use JPEG, PNG ou WebP.');
+    await receberArquivos(arquivos);
+  }
+
+  async function receberArquivos(arquivos) {
+    const imagens = arquivos.filter((f) => f.type.startsWith('image/'));
+    if (!imagens.length) {
+      if (arquivos.length) mostrarErro('Esse arquivo não é uma imagem. Use JPEG, PNG ou WebP.');
       return;
     }
-    await escolherImagem(f, { nome: f.name });
+    if (imagens.length === 1) {
+      limparLote();
+      await escolherImagem(imagens[0], { nome: imagens[0].name });
+    } else {
+      escolherLote(imagens);
+    }
   }
   ui.arquivo.addEventListener('change', aoEscolherArquivo);
   ui.camera.addEventListener('change', aoEscolherArquivo);
@@ -172,8 +182,7 @@ export function iniciarAnalise({ irPara }) {
     ui.zona.addEventListener(ev, (e) => { e.preventDefault(); ui.zona.classList.remove('sobre'); });
   }
   ui.zona.addEventListener('drop', async (e) => {
-    const f = e.dataTransfer?.files?.[0];
-    if (f && f.type.startsWith('image/')) await escolherImagem(f, { nome: f.name });
+    await receberArquivos([...(e.dataTransfer?.files || [])]);
   });
 
   // Botões "Analisar" da seção Imagens de teste.
@@ -197,6 +206,121 @@ export function iniciarAnalise({ irPara }) {
       }
     });
   }
+
+
+  // -------------------------------------------------------------- lote
+
+  const MAX_LOTE = 60;
+  const lote = {
+    itens: [], ocupado: false,
+    painel: $('#painel-lote'), resumo: $('#lote-resumo'), corpo: $('#lote-corpo-analise'),
+    analisar: $('#lote-analisar'), exportar: $('#lote-exportar'), limpar: $('#lote-limpar'),
+    progresso: $('#lote-progresso'), estado: $('#lote-estado'),
+  };
+
+  function limparLote() {
+    for (const it of lote.itens) URL.revokeObjectURL(it.url);
+    lote.itens = [];
+    limpar(lote.corpo);
+    lote.painel.hidden = true;
+    lote.exportar.disabled = true;
+    lote.estado.textContent = '';
+  }
+
+  function celulaLote(it) {
+    limpar(it.res); limpar(it.conf);
+    if (it.erro) { it.res.textContent = it.erro; return; }
+    if (!it.r) { it.res.textContent = '—'; return; }
+    const info = CATEGORIAS[it.r.sigla];
+    it.res.append(el('strong', { style: `color:${info.cor}` }, it.r.sigla), ` · ${info.nome}`,
+      it.r.instavel ? el('div', { class: 'pequeno' }, 'Predição instável') : null);
+    it.conf.textContent = percentual(it.r.confianca);
+  }
+
+  function escolherLote(arquivos) {
+    limparLote();
+    if (estado.urlPrevia) { ui.painel.hidden = true; }
+    ui.boasVindas.hidden = true;
+    limpar(ui.resultado);
+    ui.resultado.hidden = true;
+    const usados = arquivos.slice(0, MAX_LOTE);
+    for (const f of usados) {
+      const it = { file: f, nome: f.name, url: URL.createObjectURL(f), r: null, erro: null };
+      it.res = el('td', {}, '—');
+      it.conf = el('td', {}, '');
+      it.detalhe = el('button', { class: 'btn btn--sec btn--mini', type: 'button', disabled: true,
+        onclick: async () => {
+          await escolherImagem(f, { nome: f.name, manterLote: true });
+          executar();
+        } }, 'Ver detalhe');
+      lote.corpo.append(el('tr', {},
+        el('td', {}, el('img', { src: it.url, alt: `Miniatura de ${f.name}`, width: 64, height: 48, style: 'object-fit:cover;border-radius:4px' })),
+        el('td', {}, f.name), it.res, it.conf, el('td', {}, it.detalhe)));
+      lote.itens.push(it);
+    }
+    lote.resumo.textContent = `${usados.length} imagens prontas` +
+      (arquivos.length > MAX_LOTE ? ` (as ${arquivos.length - MAX_LOTE} últimas passaram do limite de ${MAX_LOTE} e foram ignoradas)` : '') +
+      '. A análise roda neste aparelho, uma imagem após a outra; nada é enviado.';
+    lote.painel.hidden = false;
+    lote.analisar.disabled = false;
+    lote.painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  lote.limpar.addEventListener('click', () => { limparLote(); ui.boasVindas.hidden = !!estado.imagem; });
+
+  lote.analisar.addEventListener('click', async () => {
+    if (lote.ocupado || !lote.itens.length) return;
+    lote.ocupado = true;
+    lote.analisar.disabled = true; lote.limpar.disabled = true; lote.exportar.disabled = true;
+    lote.estado.textContent = 'Preparando o modelo…';
+    try {
+      if (!(await garantirModelo())) {
+        lote.estado.textContent = ui.modeloMsg.textContent || 'O modelo não está disponível.';
+        return;
+      }
+      lote.progresso.hidden = false; lote.progresso.max = lote.itens.length; lote.progresso.value = 0;
+      let feitos = 0;
+      for (const it of lote.itens) {
+        lote.estado.textContent = `Analisando ${feitos + 1} de ${lote.itens.length}: ${it.nome}`;
+        it.r = null; it.erro = null;
+        try {
+          const preparada = await prepararImagem(it.file);
+          it.r = await analisar(estado.modelo, preparada, { robustez: ui.robustez.checked });
+        } catch (e) {
+          it.erro = e instanceof ErroModelo ? e.message : 'Falha ao analisar esta imagem.';
+          console.error(e);
+        }
+        celulaLote(it);
+        it.detalhe.disabled = false;
+        lote.progresso.value = ++feitos;
+        await new Promise((ok) => setTimeout(ok, 0));
+      }
+      const ok = lote.itens.filter((x) => x.r).length;
+      lote.estado.textContent = `Concluído: ${ok} de ${lote.itens.length} analisadas` +
+        (ui.robustez.checked ? ' (com verificação de robustez).' : '.');
+      lote.exportar.disabled = ok === 0;
+    } finally {
+      lote.ocupado = false;
+      lote.analisar.disabled = false; lote.limpar.disabled = false;
+      lote.progresso.hidden = true;
+    }
+  });
+
+  lote.exportar.addEventListener('click', () => {
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const linhas = [['Arquivo', 'Classe', 'Confiança', 'Predição instável', 'NILM', 'LSIL', 'HSIL', 'SCC']];
+    for (const it of lote.itens) {
+      if (!it.r) { linhas.push([it.nome, it.erro || 'não analisada', '', '', '', '', '', '']); continue; }
+      const p = (s) => it.r.probabilidades[ORDEM_DO_MODELO.indexOf(s)].toFixed(4).replace('.', ',');
+      linhas.push([it.nome, it.r.sigla, it.r.confianca.toFixed(4).replace('.', ','), it.r.instavel ? 'sim' : 'não',
+        p('NILM'), p('LSIL'), p('HSIL'), p('SCC')]);
+    }
+    const texto = '\ufeff' + linhas.map((l) => l.map(esc).join(';')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([texto], { type: 'text/csv;charset=utf-8' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'analise-em-lote.csv' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
 
   // ------------------------------------------------------------ resultado
 

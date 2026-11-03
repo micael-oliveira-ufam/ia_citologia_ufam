@@ -5,3 +5,4 @@ __pycache__/
 app/build/
 app/.dart_tool/
 app/dist/
+dist/

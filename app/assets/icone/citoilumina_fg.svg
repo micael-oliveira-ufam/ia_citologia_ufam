@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <g transform="translate(512 512) scale(0.62) translate(-512 -512)">
+    <defs><clipPath id="lente"><circle cx="512" cy="512" r="330"/></clipPath></defs>
+    <circle cx="512" cy="512" r="368" fill="none" stroke="#ffffff" stroke-opacity=".35" stroke-width="26"/>
+    <circle cx="512" cy="512" r="340" fill="#ffffff"/>
+    
+    <g clip-path="url(#lente)">
+      <rect x="150" y="150" width="724" height="724" fill="#f3fafb"/>
+      <g opacity=".55"><circle cx="360" cy="300" r="22" fill="#d8eef1"/><circle cx="700" cy="760" r="30" fill="#d8eef1"/><circle cx="270" cy="640" r="18" fill="#d8eef1"/></g>
+      <g><circle cx="480" cy="520" r="136" fill="#efc9f1" stroke="#b657c9" stroke-width="12"/><circle cx="480" cy="520" r="56" fill="#7a2c9e"/><circle cx="462" cy="502" r="16" fill="#a55ac4"/></g>
+      <g><circle cx="680" cy="420" r="78" fill="#f6d6ee" stroke="#c46ad0" stroke-width="10"/><circle cx="680" cy="420" r="30" fill="#8c3aa8"/></g>
+      <g><circle cx="385" cy="725" r="70" fill="#efc9f1" stroke="#b657c9" stroke-width="10"/><circle cx="385" cy="725" r="27" fill="#7a2c9e"/></g>
+      <g><circle cx="690" cy="655" r="62" fill="#f6d6ee" stroke="#c46ad0" stroke-width="10"/><circle cx="690" cy="655" r="24" fill="#8c3aa8"/></g>
+    </g>
+    <circle cx="512" cy="512" r="330" fill="none" stroke="#0a4553" stroke-opacity=".25" stroke-width="8"/>
+    
+    <g transform="translate(742 282)">
+      <path d="M0 -120 C 10 -34 34 -10 120 0 C 34 10 10 34 0 120 C -10 34 -34 10 -120 0 C -34 -10 -10 -34 0 -120 Z" fill="#ffc83d" stroke="#fff3c4" stroke-width="10" stroke-linejoin="round"/>
+      <circle r="26" fill="#fffaf0"/>
+    </g></g>
+</svg>

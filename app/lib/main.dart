@@ -23,7 +23,7 @@ class ColoIaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Colo do Útero com IA',
+      title: 'CitoIlumina',
       debugShowCheckedModeBanner: false,
       theme: construirTema(),
       home: Raiz(gerenciadorModelo: gerenciadorModelo),

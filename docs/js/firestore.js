@@ -7,8 +7,8 @@
 //   evaluations  id (= slideId_userId), slideId, userId, userName, userEmail,
 //                classification, morphologyDescription, notes, createdAt
 
-import { FIREBASE } from './config.js?v=4';
-import { token as tokenFirebase, uidAtual, entrar, ErroAutenticacao } from './autenticacao.js?v=4';
+import { FIREBASE } from './config.js?v=5';
+import { token as tokenFirebase, uidAtual, entrar, ErroAutenticacao } from './autenticacao.js?v=5';
 
 const RAIZ =
   `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}` +
@@ -50,7 +50,7 @@ function codificar(obj) {
   const f = {};
   for (const [k, v] of Object.entries(obj)) {
     if (v == null) f[k] = { nullValue: null };
-    else if (typeof v === 'number') f[k] = { integerValue: String(Math.trunc(v)) };
+    else if (typeof v === 'number') f[k] = Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
     else f[k] = { stringValue: String(v) };
   }
   return f;
@@ -243,18 +243,35 @@ export async function excluirLamina(id) {
   await chamar('DELETE', `/slides/${encodeURIComponent(id)}`);
 }
 
-/** Grava (ou refaz) a avaliação cega deste navegador para uma lâmina. */
+/**
+ * Grava (ou refaz) a avaliação humana cega deste navegador. Usa máscara de campos para
+ * não apagar os complementos (IA e validação externa) já registrados nesta avaliação.
+ */
 export async function salvarAvaliacao({ slideId, classificacao, descricao, observacoes, nome }) {
   const uid = await entrar();
   const id = `${slideId}_${uid}`;
-  await chamar('PATCH', `/evaluations/${encodeURIComponent(id)}`, {
-    corpo: {
-      fields: codificar({
-        id, slideId, userId: uid, userName: nome || 'Avaliador anônimo', userEmail: '',
-        classification: classificacao, morphologyDescription: descricao || '', notes: observacoes || '',
-        createdAt: agora(),
-      }),
-    },
-  });
-  return { id, slideId, userId: uid, classification: classificacao, morphologyDescription: descricao || '', notes: observacoes || '' };
+  const campos = {
+    id, slideId, userId: uid, userName: nome || 'Avaliador anônimo', userEmail: '',
+    classification: classificacao, morphologyDescription: descricao || '', notes: observacoes || '',
+    createdAt: agora(),
+  };
+  const q = Object.keys(campos).map((k) => ['updateMask.fieldPaths', k]);
+  const doc = await chamar('PATCH', `/evaluations/${encodeURIComponent(id)}`, { consulta: q, corpo: { fields: codificar(campos) } });
+  return documentoParaObjeto(doc);
+}
+
+/**
+ * Complementos da MINHA avaliação: resultado da IA interna e da validação externa.
+ * Só mexe nesses campos (máscara); a avaliação humana precisa existir antes.
+ * `dados`: { aiClassification, aiConfidence, aiModelVersion, externalClassification, externalNote }
+ */
+export async function salvarComplementoAvaliacao(slideId, dados) {
+  const uid = await entrar();
+  const id = `${slideId}_${uid}`;
+  const permitidos = ['aiClassification', 'aiConfidence', 'aiModelVersion', 'externalClassification', 'externalNote'];
+  const campos = { complementedAt: agora() };
+  for (const k of permitidos) if (dados[k] !== undefined) campos[k] = dados[k];
+  const q = Object.keys(campos).map((k) => ['updateMask.fieldPaths', k]);
+  const doc = await chamar('PATCH', `/evaluations/${encodeURIComponent(id)}`, { consulta: q, corpo: { fields: codificar(campos) } });
+  return documentoParaObjeto(doc);
 }

@@ -338,3 +338,18 @@ dialog.visor--form { width: min(640px, 96vw); }
 .acoes-inicio { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .acoes-inicio .btn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
 .lista-fontes { padding-left: 1.2rem; overflow-wrap: anywhere; }
+
+/* ---- catálogo: seleção em lote, análises, IA ---- */
+.lamina-wrap { position: relative; display: flex; flex-direction: column; }
+.lamina-wrap > .lamina { width: 100%; }
+.lamina-wrap .sel { display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: .85rem; color: var(--tinta-fraca); cursor: pointer; min-height: 36px; }
+.lamina-wrap .sel input { width: 18px; height: 18px; }
+.barra--sel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: .6rem 0; }
+.analises { display: grid; gap: 10px; margin-top: 12px; }
+.analise h4 { margin: 0 0 6px; }
+.analise select { max-width: 100%; min-height: 40px; font: inherit; border: 1px solid var(--linha); border-radius: 8px; padding: .3rem .5rem; background: var(--superficie); color: var(--tinta); }
+.ia-res { border-left: 4px solid var(--c, #555); padding: 6px 10px; margin: 8px 0; background: var(--superficie); border-radius: 6px; }
+.lote-mini { width: 56px; height: 42px; object-fit: cover; border-radius: 4px; }
+.lote-res { min-width: 160px; }
+#lote .form-corpo { max-height: calc(94vh - 140px); }
+#analise-lote .res-lote img { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; }

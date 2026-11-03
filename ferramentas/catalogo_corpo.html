@@ -13,7 +13,9 @@
         <strong>não mostra classificações, descrições nem avaliadores</strong> das lâminas de outras
         pessoas: só a imagem, o ID, a data e quantas avaliações cada lâmina já recebeu. O quórum
         oficial exige a concordância de pelo menos 3 citopatologistas. Você pode cadastrar lâminas,
-        avaliar as dos outros e editar ou excluir as que você mesmo cadastrou.
+        avaliar as dos outros (análise humana), editar ou excluir as suas, e depois comparar a sua leitura com a
+        <strong>IA interna</strong> e com um <strong>validador externo</strong>. Também dá para selecionar várias
+        lâminas e analisá-las com a IA de uma vez.
       </div>
       <p><button class="btn" id="nova" type="button">+ Cadastrar lâmina</button></p>
 
@@ -35,12 +37,43 @@
       </div>
       <p class="pequeno" id="nota-votos" hidden></p>
 
+      <div id="selecao" class="barra barra--sel" hidden>
+        <span id="selecao-texto" aria-live="polite">Nenhuma lâmina selecionada</span>
+        <button class="btn btn--sec btn--mini" id="selecao-todas" type="button">Selecionar as visíveis</button>
+        <button class="btn btn--sec btn--mini" id="selecao-limpar" type="button" disabled>Limpar seleção</button>
+        <button class="btn btn--mini" id="selecao-analisar" type="button" disabled>Analisar selecionadas com a IA</button>
+      </div>
+
       <div id="status" hidden></div>
       <div class="grade" id="grade"></div>
       <p style="text-align:center; margin-top:20px">
         <button class="btn btn--sec" id="mais" type="button" hidden>Carregar mais lâminas</button>
       </p>
     </div>
+
+<dialog class="visor visor--form" id="lote" aria-labelledby="lote-titulo">
+    <div class="visor__in">
+      <div class="visor__topo">
+        <h2 id="lote-titulo">Análise em lote com a IA</h2>
+        <button class="btn btn--sec" id="lote-fechar" type="button">Fechar</button>
+      </div>
+      <div class="form-corpo">
+        <p class="pequeno">A IA interna (mesmo modelo da aba Análise) roda neste aparelho, em sequência, em todas as lâminas selecionadas. Nenhuma imagem sai do navegador. É apoio à leitura, não é laudo.</p>
+        <label class="caixa-marcar">
+          <input type="checkbox" id="lote-incluir">
+          <span><strong>Incluir lâminas que ainda não avaliei</strong>
+            <span class="pequeno bloco">Revela a sugestão da IA antes da sua avaliação humana e pode influenciar a avaliação cega. Desmarcado, essas lâminas ficam ocultas.</span></span>
+        </label>
+        <div id="lote-corpo"></div>
+        <p class="pequeno" id="lote-msg" role="status" aria-live="polite"></p>
+        <progress id="lote-prog" max="100" hidden aria-label="Progresso da análise em lote"></progress>
+      </div>
+      <div class="visor__rodape">
+        <button class="btn" id="lote-rodar" type="button">Executar análise em lote</button>
+        <button class="btn btn--sec" id="lote-csv" type="button" disabled>Baixar CSV</button>
+      </div>
+    </div>
+  </dialog>
 
 <dialog class="visor visor--form" id="form-lamina" aria-labelledby="form-titulo">
     <form class="visor__in form-lamina" id="form" method="dialog" novalidate>

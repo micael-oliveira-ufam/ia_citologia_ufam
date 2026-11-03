@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Gera o APK do aplicativo Colo do Útero com IA (pacientes e profissionais).
+# Gera o APK do aplicativo CitoIlumina (pacientes e profissionais).
 #
 #   ./build_apk.sh                  APKs por arquitetura (menores, recomendado)
 #   ./build_apk.sh --universal      APK único, roda em qualquer aparelho
@@ -49,14 +49,22 @@ command -v flutter >/dev/null 2>&1 || erro \
   "Flutter não encontrado no PATH. Instale em https://docs.flutter.dev/get-started/install"
 ok "flutter $(flutter --version 2>/dev/null | head -n1 | awk '{print $2}')"
 
-if ! flutter doctor 2>/dev/null | grep -q "Android toolchain"; then
-  aviso "flutter doctor não confirmou o Android toolchain; a compilação pode falhar"
+# No macOS, /usr/bin/java existe mesmo sem JDK instalado (é só um atalho): testar de verdade.
+if ! java -version >/dev/null 2>&1; then
+  erro "Java (JDK 17) não está instalado de verdade. No macOS: brew install --cask temurin@17
+  e depois: export JAVA_HOME=\$(/usr/libexec/java_home -v 17)"
 fi
+ok "Java $(java -version 2>&1 | head -n1)"
 
-if [ -z "${JAVA_HOME:-}" ] && ! command -v java >/dev/null 2>&1; then
-  erro "Java não encontrado. Instale o JDK 17 e defina JAVA_HOME."
+DOCTOR=$(flutter doctor 2>&1 || true)
+if ! echo "$DOCTOR" | grep -E "Android toolchain" | grep -q "\[✓\]"; then
+  echo "$DOCTOR" | grep -A6 "Android toolchain" | sed 's/^/    /' || true
+  erro "O Android SDK não está pronto. Instale o Android Studio (ou as command-line tools) e rode:
+  flutter config --android-sdk <pasta do SDK>   (no Mac: ~/Library/Android/sdk)
+  flutter doctor --android-licenses
+  Depois rode este script de novo."
 fi
-ok "Java disponível"
+ok "Android toolchain pronto"
 
 # ---------------------------------------------------------------------------
 titulo "Modelo de citologia"
@@ -157,6 +165,13 @@ fi
 flutter pub get
 ok "dependências resolvidas"
 
+# Ícone do launcher (Android e iOS) a partir de assets/icone/citoilumina*.png.
+if dart run flutter_launcher_icons >/dev/null 2>&1; then
+  ok "ícones do CitoIlumina gerados"
+else
+  aviso "não consegui gerar os ícones (dart run flutter_launcher_icons); o app usará o ícone padrão do Flutter"
+fi
+
 if [ "$MODO" = "debug" ]; then
   flutter build apk --debug
   ARTEFATOS=(build/app/outputs/flutter-apk/app-debug.apk)
@@ -173,10 +188,11 @@ titulo "Publicando os artefatos"
 
 mkdir -p "$DESTINO"
 CARIMBO=$(date +%Y%m%d)
+SLUG=$(python3 ../ferramentas/versao.py --slug 2>/dev/null || echo citoilumina)
 for caminho in "${ARTEFATOS[@]}"; do
   [ -f "$caminho" ] || continue
   base=$(basename "$caminho" .apk)
-  alvo="$DESTINO/colo-ia-${base#app-}-${CARIMBO}.apk"
+  alvo="$DESTINO/${SLUG}-${base#app-}-${CARIMBO}.apk"
   cp "$caminho" "$alvo"
   tamanho=$(du -h "$alvo" | cut -f1)
   if command -v sha256sum >/dev/null 2>&1; then

@@ -1,4 +1,4 @@
-# Gera o APK do aplicativo "Colo do Útero IA" na nuvem do GitHub.
+# Gera o APK do aplicativo "CitoIlumina" na nuvem do GitHub.
 #
 # Como usar:
 #   • Manual: aba Actions > "Gerar APK" > Run workflow. Ao terminar, baixe os APKs em
@@ -76,6 +76,19 @@ jobs:
           flutter pub get
           flutter test
 
+      - name: Conferir versão (VERSAO, pubspec, tag)
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 ferramentas/versao.py --verificar
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            esperado="v$(python3 ferramentas/versao.py --nome)"
+            if [ "$GITHUB_REF_NAME" != "$esperado" ]; then
+              echo "A tag $GITHUB_REF_NAME não bate com VERSAO (esperado $esperado)." >&2
+              exit 1
+            fi
+          fi
+          echo "SLUG=$(python3 ferramentas/versao.py --slug)" >> "$GITHUB_ENV"
+
       - name: APKs por arquitetura
         run: ./build_apk.sh
 
@@ -89,7 +102,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: colo-ia-apk
+          name: ${{ env.SLUG }}-apk
           path: |
             app/dist/*.apk
             app/dist/*.sha256

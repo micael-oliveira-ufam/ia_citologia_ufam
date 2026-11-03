@@ -1,4 +1,4 @@
-# Colo do Útero com IA
+# CitoIlumina — colo do útero com IA
 
 Aplicativo Flutter (Android e iOS) que reúne, em um só lugar:
 
@@ -223,3 +223,24 @@ Dados: UCI, *Cervical Cancer (Risk Factors)* — 858 pacientes do Hospital Unive
   painel **não foi portado**.
 - Material de pacientes numa página pública exige autorização/aprovação ética: confirme antes de
   publicar o site.
+
+
+## Novidades: análise em lote, IA no catálogo e validação externa
+
+- **Análise em lote (aba Análise):** selecione ou arraste até 60 imagens de uma vez. A IA roda no navegador, uma por vez, e o resultado vira uma tabela (com "Ver detalhe" e exportação em CSV).
+- **Catálogo:** marque várias lâminas e use "Analisar selecionadas com a IA". Para preservar a **avaliação cega**, a sugestão da IA só aparece nas lâminas que você já avaliou (ou nas suas), a menos que você marque explicitamente "Incluir não avaliadas".
+- **Análise humana + IA interna:** ao abrir uma lâmina, o painel mostra sua avaliação, a IA (registrada como complemento, sem sobrescrever a avaliação humana) e uma tabela de concordância.
+- **Validação externa:** o site https://cervical-screening.pythonaisolutions.com/ não tem API documentada, então o fluxo é guiado: baixe a imagem, abra o validador em nova aba, envie lá e registre o resultado no painel. Aviso: a imagem sai deste site para um terceiro; use só imagens sem dados de pacientes.
+- Campos extras gravados na avaliação (`aiClassification`, `aiConfidence`, `aiModelVersion`, `externalClassification`, `externalNote`) não exigem mudança nas regras do Firestore.
+
+## Versão do aplicativo
+
+A versão fica em um único arquivo, `VERSAO` (formato `NOME+BUILD`, ex.: `1.1.0+2`).
+
+- `python3 ferramentas/versao.py` copia a versão para `app/pubspec.yaml`, `app/lib/versao.dart` e `docs/js/versao.js`.
+- `python3 ferramentas/versao.py --verificar` confere se tudo está sincronizado (o workflow do APK faz isso).
+- Ao gerar o site, o rodapé mostra a versão.
+- A tela "Sobre o projeto" do app mostra a versão no canto superior.
+- Pacote de entrega: `python3 ferramentas/empacotar.py` gera `dist/citoilumina-v1.1.0-b2.tgz`, cuja pasta de topo tem o mesmo nome (ao descompactar, sai `citoilumina-v1.1.0-b2/`). Use `--com-modelo` para incluir o modelo de IA.
+- APKs saem como `citoilumina-v1.1.0-b2-<arquitetura>-<data>.apk`. Para publicar uma Release, crie a tag igual à versão (`git tag v1.1.0 && git push origin v1.1.0`); o workflow recusa a tag se não bater com `VERSAO`.
+- Para uma nova versão: edite `VERSAO`, rode `python3 ferramentas/versao.py` e `python3 ferramentas/gerar_site.py`.
