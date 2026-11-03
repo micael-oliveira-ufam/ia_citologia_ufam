@@ -226,6 +226,7 @@ export async function atualizarLamina(id, mudancas) {
     ...(mudancas.data !== undefined && { date: mudancas.data }),
     ...(mudancas.descricao !== undefined && { morphologyDescription: mudancas.descricao }),
     ...(mudancas.observacoes !== undefined && { notes: mudancas.observacoes }),
+    ...(mudancas.pasta !== undefined && { pasta: mudancas.pasta }),
     updatedAt: agora(),
   };
   const q = Object.keys(m).map((k) => ['updateMask.fieldPaths', k]);

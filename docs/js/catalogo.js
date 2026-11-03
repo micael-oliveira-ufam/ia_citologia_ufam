@@ -718,6 +718,7 @@ const fPrevia = $('#f-previa');
 const fFotoInfo = $('#f-foto-info');
 const fId = $('#f-id');
 const fData = $('#f-data');
+const fPasta = $('#f-pasta');
 const fClasses = $('#f-classes');
 const fDesc = $('#f-desc');
 const fObs = $('#f-obs');
@@ -751,6 +752,7 @@ async function abrirFormulario(l = null) {
   $('#form-titulo').textContent = l ? 'Editar lâmina' : 'Cadastrar lâmina';
   fId.value = l ? (l.patientId || '') : '';
   fData.value = l ? (l.date || hoje()) : hoje();
+  fPasta.value = l ? (l.pasta || '') : '';
   fDesc.value = l ? (l.morphologyDescription || '') : '';
   fObs.value = l ? (l.notes || '') : '';
   while (fClasses.children.length > 1) fClasses.lastChild.remove();
@@ -795,6 +797,7 @@ form.addEventListener('submit', async (ev) => {
     const dados = {
       patientId: id, data: fData.value, classificacao: marcada.value,
       descricao: fDesc.value.trim(), observacoes: fObs.value.trim(),
+      pasta: fPasta.value.trim(),
     };
     if (editando) {
       const novo = await atualizarLamina(editando.id, { ...dados, ...(imagemPronta ? { imagem: imagemPronta } : {}) });
