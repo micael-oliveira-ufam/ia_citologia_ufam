@@ -244,3 +244,17 @@ A versão fica em um único arquivo, `VERSAO` (formato `NOME+BUILD`, ex.: `1.1.0
 - Pacote de entrega: `python3 ferramentas/empacotar.py` gera `dist/citoilumina-v1.1.0-b2.tgz`, cuja pasta de topo tem o mesmo nome (ao descompactar, sai `citoilumina-v1.1.0-b2/`). Use `--com-modelo` para incluir o modelo de IA.
 - APKs saem como `citoilumina-v1.1.0-b2-<arquitetura>-<data>.apk`. Para publicar uma Release, crie a tag igual à versão (`git tag v1.1.0 && git push origin v1.1.0`); o workflow recusa a tag se não bater com `VERSAO`.
 - Para uma nova versão: edite `VERSAO`, rode `python3 ferramentas/versao.py` e `python3 ferramentas/gerar_site.py`.
+
+## Importar um lote de imagens para o catálogo
+
+`ferramentas/importar_lote.py` envia uma pasta (ou um `.zip`) de lâminas direto para o Firestore, com o nome da pasta do lote.
+
+```bash
+pip3 install pillow
+python3 ferramentas/importar_lote.py "/caminho/Citologia Líquida" --pasta "03 de agosto de 2026" --data 2026-08-03
+```
+
+- Use `--simular` para conferir antes (conta imagens e classes, sem enviar).
+- A classe vem do nome do arquivo (HSIL, LSIL, ASCH → ASC-H). Arquivos sem classe são pulados.
+- As iniciais das pastas de origem não são gravadas, porque identificam pacientes.
+- Se a internet cair, rode o mesmo comando de novo: o progresso fica em `ferramentas/importacao_feitos.jsonl`.

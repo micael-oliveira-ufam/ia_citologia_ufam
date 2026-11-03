@@ -6,3 +6,4 @@ app/build/
 app/.dart_tool/
 app/dist/
 dist/
+ferramentas/importacao_feitos.jsonl

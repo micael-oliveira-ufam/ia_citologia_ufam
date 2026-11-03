@@ -201,7 +201,7 @@ export async function proximoId({ sinal } = {}) {
 const agora = () => Date.now();
 
 /** Cadastra uma lâmina nova. `imagem` é um data URL JPEG já comprimido. */
-export async function criarLamina({ patientId, imagem, classificacao, data, descricao, observacoes, nome }) {
+export async function criarLamina({ patientId, imagem, classificacao, data, descricao, observacoes, nome, pasta }) {
   const uid = await entrar();
   const t = agora();
   const doc = await chamar('POST', '/slides', {
@@ -210,6 +210,7 @@ export async function criarLamina({ patientId, imagem, classificacao, data, desc
         patientId, imageUrl: imagem, classification: classificacao, date: data,
         morphologyDescription: descricao || '', notes: observacoes || '',
         creatorId: uid, creatorName: nome || 'Citopatologista', createdAt: t, updatedAt: t,
+        ...(pasta ? { pasta } : {}),
       }),
     },
   });

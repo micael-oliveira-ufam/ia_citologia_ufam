@@ -50,6 +50,7 @@ const maisBtn = $('#mais');
 const contagemEl = $('#contagem');
 const buscaEl = $('#busca');
 const filtroVotosEl = $('#filtro-votos');
+const filtroPastaEl = $('#filtro-pasta');
 const notaVotos = $('#nota-votos');
 
 // ---------------------------------------------------------------- dados
@@ -128,11 +129,25 @@ function seloVotos(n) {
   return { texto: `${n}/${CATALOGO.votosParaConsenso} avaliações`, classe: 'votos--parcial' };
 }
 
+/** Atualiza as opções de pasta com as pastas já carregadas, mantendo a escolha atual. */
+function atualizarPastas() {
+  const atual = filtroPastaEl.value;
+  const pastas = [...new Set(estado.laminas.map((l) => l.pasta).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  limpar(filtroPastaEl);
+  filtroPastaEl.append(el('option', { value: 'todas' }, 'Todas as pastas'));
+  for (const p of pastas) filtroPastaEl.append(el('option', { value: p }, p));
+  filtroPastaEl.append(el('option', { value: '__sem__' }, 'Sem pasta'));
+  filtroPastaEl.value = [...filtroPastaEl.options].some((o) => o.value === atual) ? atual : 'todas';
+}
+
 function filtradas() {
   const termo = buscaEl.value.trim().toLowerCase();
   const f = filtroVotosEl.value;
+  const pasta = filtroPastaEl.value;
   return estado.laminas.filter((l) => {
     if (termo && !idPublico(l.patientId).texto.toLowerCase().includes(termo)) return false;
+    if (pasta === '__sem__' && l.pasta) return false;
+    if (pasta !== 'todas' && pasta !== '__sem__' && l.pasta !== pasta) return false;
     const n = votosDe(l);
     if (f !== 'todas' && n != null) {
       if (f === 'sem' && n !== 0) return false;
@@ -161,6 +176,7 @@ function cartao(l) {
     el('div', { class: 'lamina__linha' },
       el('span', { class: 'lamina__id', title: id.oculto ? 'ID original ocultado por privacidade' : null }, id.texto),
       el('span', { class: 'lamina__data' }, formatarData(l.date || l.createdAt))),
+    l.pasta ? el('span', { class: 'lamina__pasta' }, `Pasta: ${l.pasta}`) : null,
     el('span', { class: `votos ${selo.classe}` }, selo.texto)));
   const caixa = el('input', {
     type: 'checkbox', checked: estado.selecionadas.has(l.id), 'aria-label': `Selecionar ${id.texto} para análise em lote`,
@@ -174,6 +190,7 @@ function cartao(l) {
 
 function renderizar() {
   limpar(grade);
+  atualizarPastas();
   const lista = filtradas();
   for (const l of lista) grade.append(cartao(l));
   contagemEl.textContent = `${lista.length} de ${estado.laminas.length} carregadas`;
@@ -804,6 +821,7 @@ $('#nova').addEventListener('click', () => abrirFormulario(null));
 
 buscaEl.addEventListener('input', renderizar);
 filtroVotosEl.addEventListener('change', renderizar);
+filtroPastaEl.addEventListener('change', renderizar);
 maisBtn.addEventListener('click', carregarMais);
 
 const painelConexao = $('#conexao');

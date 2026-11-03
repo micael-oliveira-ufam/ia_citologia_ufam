@@ -283,6 +283,7 @@ html.js .secao.ativa { display: block; }
 .lamina__linha { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
 .lamina__id { font-weight: 800; }
 .lamina__data { color: var(--tinta-fraca); }
+.lamina__pasta { display: block; font-size: 0.85em; color: var(--tinta-fraca); margin-top: 2px; }
 .votos { font-size: 13px; font-weight: 700; }
 .votos--0 { color: var(--tinta-fraca); }
 .votos--parcial { color: var(--teal-escuro); }
