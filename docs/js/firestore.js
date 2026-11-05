@@ -155,6 +155,37 @@ export async function contarVotos({ sinal, maxPaginas = 40 } = {}) {
   return { contagem, completo: false };
 }
 
+/**
+ * Resumo das avaliações de cada lâmina, para mostrar (se o usuário pedir) e para
+ * agrupar por classe. Devolve Map(slideId -> [{ classificacao, ia, confianca }]).
+ * Só lê campos de classificação (nada de descrição, observação ou autor).
+ */
+export async function resumoAvaliacoes({ sinal, maxPaginas = 40 } = {}) {
+  const mapa = new Map();
+  let pagina = null;
+  for (let i = 0; i < maxPaginas; i++) {
+    const q = [['pageSize', '300'],
+      ['mask.fieldPaths', 'slideId'], ['mask.fieldPaths', 'classification'],
+      ['mask.fieldPaths', 'aiClassification'], ['mask.fieldPaths', 'aiConfidence']];
+    if (pagina) q.push(['pageToken', pagina]);
+    const dados = await chamar('GET', '/evaluations', { consulta: q, sinal });
+    for (const d of dados.documents || []) {
+      const f = d.fields || {};
+      const id = f.slideId?.stringValue;
+      if (!id) continue;
+      if (!mapa.has(id)) mapa.set(id, []);
+      mapa.get(id).push({
+        classificacao: f.classification?.stringValue || null,
+        ia: f.aiClassification?.stringValue || null,
+        confianca: f.aiConfidence?.doubleValue ?? f.aiConfidence?.integerValue ?? null,
+      });
+    }
+    pagina = dados.nextPageToken || null;
+    if (!pagina) return { mapa, completo: true };
+  }
+  return { mapa, completo: false };
+}
+
 async function consultar(colecao, campo, valorTexto, { mascara, limite = 500, sinal } = {}) {
   const sq = {
     from: [{ collectionId: colecao }],

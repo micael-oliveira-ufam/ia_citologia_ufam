@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('abre pedindo o perfil e entra no modo paciente', (tester) async {
     await tester.pumpWidget(
-      ColoIaApp(gerenciadorModelo: GerenciadorModelo.inerte()),
+      ColoIaApp(gerenciadorModelo: GerenciadorModelo.inerte(), exibirSplash: false),
     );
 
     expect(find.text('Sou paciente'), findsOneWidget);
@@ -26,7 +26,7 @@ void main() {
 
   testWidgets('o modo profissional mostra a ferramenta de análise', (tester) async {
     await tester.pumpWidget(
-      ColoIaApp(gerenciadorModelo: GerenciadorModelo.inerte()),
+      ColoIaApp(gerenciadorModelo: GerenciadorModelo.inerte(), exibirSplash: false),
     );
 
     await tester.tap(find.text('Sou profissional de saúde'));
@@ -35,5 +35,20 @@ void main() {
 
     expect(find.text('Modo profissional de saúde'), findsOneWidget);
     expect(find.text('Analisar'), findsOneWidget);
+  });
+
+  testWidgets('a splash aparece primeiro e depois mostra a escolha de perfil',
+      (tester) async {
+    await tester.pumpWidget(
+      ColoIaApp(gerenciadorModelo: GerenciadorModelo.inerte()),
+    );
+
+    expect(find.text('CitoIlumina'), findsOneWidget);
+    expect(find.text('Sou paciente'), findsNothing);
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.text('Sou paciente'), findsOneWidget);
   });
 }

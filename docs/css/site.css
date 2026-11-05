@@ -354,3 +354,46 @@ dialog.visor--form { width: min(640px, 96vw); }
 .lote-res { min-width: 160px; }
 #lote .form-corpo { max-height: calc(94vh - 140px); }
 #analise-lote .res-lote img { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; }
+
+/* ---------------- Catálogo: opções de exibição, Bethesda, visor e download ---------------- */
+.exibicao { display: grid; gap: 8px; margin: 0 0 12px; padding: 12px 14px; border: 1px solid var(--linha); border-radius: 14px; background: var(--superficie); }
+.exibicao__titulo { margin: 0; font-weight: 700; font-size: .95rem; }
+.exibicao .pequeno { margin: 0; }
+.chave { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: .95rem; cursor: pointer; }
+.chave input { width: 20px; height: 20px; flex: none; accent-color: var(--teal); }
+.barra-acoes { margin: 0 0 14px; }
+.votos--oculto { color: var(--tinta-fraca); font-weight: 600; }
+.lamina__resumo { display: grid; gap: 2px; font-size: 13px; color: var(--tinta); }
+.lamina__res-linha strong { color: var(--tinta-fraca); font-weight: 600; }
+
+dialog.visor:not(.visor--form) { width: min(1120px, 96vw); }
+.visor__corpo { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 380px); min-height: 0; overflow: hidden; }
+.visor__corpo .visor__palco { height: auto; min-height: 380px; }
+.visor__painel { min-height: 0; overflow: auto; padding: 14px; border-left: 1px solid var(--linha); background: var(--superficie); display: grid; align-content: start; gap: 12px; }
+.resumo-visor { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--teal-claro); font-size: .92rem; }
+.resumo-visor p { margin: 0; }
+.painel__titulo { margin: 0; font-size: 1.05rem; }
+.bethesda-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bethesda-btn { display: grid; gap: 2px; min-height: 64px; padding: 10px 12px; text-align: left; font: inherit; color: var(--tinta); background: var(--superficie); border: 2px solid var(--linha); border-radius: 12px; cursor: pointer; transition: border-color .15s, background .15s; }
+.bethesda-btn strong { font-size: 1rem; }
+.bethesda-btn span { font-size: .78rem; line-height: 1.25; color: var(--tinta-fraca); }
+.bethesda-btn:hover { border-color: var(--teal); }
+.bethesda-btn:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.bethesda-btn[aria-pressed="true"] { border-color: var(--teal); background: var(--teal-claro); box-shadow: inset 0 0 0 1px var(--teal); }
+.bethesda-btn[aria-pressed="true"] strong::after { content: " ✓"; color: var(--teal); }
+.btn--bloco { width: 100%; min-height: 48px; }
+.detalhes-texto, .detalhes-ia { padding: 8px 12px; border: 1px solid var(--linha); border-radius: 12px; background: var(--superficie); }
+.detalhes-texto summary, .detalhes-ia summary { display: flex; align-items: center; min-height: 40px; font-weight: 600; cursor: pointer; }
+.detalhes-texto .aval-form { padding: 6px 0 2px; }
+.dl-fonte { display: grid; gap: 8px; border: 0; padding: 0; margin: 0 0 12px; }
+.dl-fonte legend { margin-bottom: 6px; font-weight: 700; }
+.dl-fonte .opcao { padding: 10px 12px; border: 1px solid var(--linha); border-radius: 12px; }
+.dl-fonte .opcao input { margin-top: 4px; accent-color: var(--teal); }
+
+@media (max-width: 860px) {
+  .visor__in { overflow: auto; }
+  .visor__corpo { grid-template-columns: 1fr; overflow: visible; }
+  .visor__corpo .visor__palco { height: 44vh; min-height: 260px; }
+  .visor__painel { border-left: 0; border-top: 1px solid var(--linha); overflow: visible; }
+}
+@media (max-width: 420px) { .bethesda-grade { grid-template-columns: 1fr; } }

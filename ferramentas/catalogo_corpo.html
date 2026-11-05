@@ -43,6 +43,15 @@
         <span class="contagem" id="contagem" aria-live="polite"></span>
       </div>
       <p class="pequeno" id="nota-votos" hidden></p>
+      <div class="exibicao" role="group" aria-labelledby="exibicao-titulo">
+        <p class="exibicao__titulo" id="exibicao-titulo">O que mostrar nas lâminas</p>
+        <label class="chave"><input type="checkbox" id="mostrar-ia"><span>Mostrar classificações e predições da IA</span></label>
+        <label class="chave"><input type="checkbox" id="mostrar-votos"><span>Mostrar votos realizados</span></label>
+        <p class="pequeno">Desligadas por padrão, para manter a avaliação cega. Quando ligadas, as informações aparecem nos cartões e no visualizador.</p>
+      </div>
+      <div class="barra-acoes">
+        <button class="btn btn--sec" id="baixar-classes" type="button">Baixar imagens por classe (.zip)</button>
+      </div>
 
       <div id="selecao" class="barra barra--sel" hidden>
         <span id="selecao-texto" aria-live="polite">Nenhuma lâmina selecionada</span>
@@ -78,6 +87,33 @@
       <div class="visor__rodape">
         <button class="btn" id="lote-rodar" type="button">Executar análise em lote</button>
         <button class="btn btn--sec" id="lote-csv" type="button" disabled>Baixar CSV</button>
+      </div>
+    </div>
+  </dialog>
+
+<dialog class="visor visor--form" id="dialogo-download" aria-labelledby="dl-titulo">
+    <div class="visor__in">
+      <div class="visor__topo">
+        <h2 id="dl-titulo">Baixar imagens por classe</h2>
+        <button class="btn btn--sec" id="dl-fechar" type="button">Fechar</button>
+      </div>
+      <div class="form-corpo">
+        <fieldset class="campo dl-fonte">
+          <legend>Separar as imagens pela classificação de</legend>
+          <label class="opcao"><input type="radio" name="dl-fonte" value="ia" checked>
+            <span><strong>Inteligência artificial</strong>: o modelo analisa cada imagem do catálogo. Classes que ele reconhece: NILM, LSIL, HSIL e SCC.</span></label>
+          <label class="opcao"><input type="radio" name="dl-fonte" value="humano">
+            <span><strong>Avaliação humana</strong>: classe de consenso das avaliações (mínimo de 3 avaliações, com maioria). Sem consenso vai para a pasta "sem-consenso".</span></label>
+        </fieldset>
+        <p class="aviso aviso--atencao">O arquivo mostra a classificação de cada imagem. Não use para avaliar lâminas que você ainda não avaliou: isso compromete a avaliação cega.</p>
+        <p class="pequeno">Serão baixadas todas as lâminas do catálogo, em pastas por classe, com um arquivo <code>indice.csv</code>.</p>
+        <progress id="dl-prog" max="100" hidden aria-label="Progresso do download"></progress>
+        <p class="aviso aviso--erro" id="dl-erro" role="alert" hidden></p>
+        <p class="pequeno" id="dl-msg" aria-live="polite"></p>
+      </div>
+      <div class="visor__rodape">
+        <button class="btn" id="dl-iniciar" type="button">Gerar e baixar .zip</button>
+        <button class="btn btn--sec" id="dl-cancelar" type="button">Cancelar</button>
       </div>
     </div>
   </dialog>
@@ -133,11 +169,14 @@
         <h2 id="visor-titulo"></h2>
         <button class="btn btn--sec" id="visor-fechar" type="button">Fechar</button>
       </div>
-      <div class="visor__palco" id="palco" tabindex="0" role="img" aria-label="Imagem da lâmina. Arraste para mover; use +, − e 0 para ampliar, reduzir e ajustar.">
-        <img id="visor-img" alt="">
-      </div>
-      <div class="painel-aval" id="painel">
-        <div id="painel-conteudo"></div>
+      <div class="visor__corpo">
+        <div class="visor__palco" id="palco" tabindex="0" role="img" aria-label="Imagem da lâmina. Arraste para mover; use +, − e 0 para ampliar, reduzir e ajustar.">
+          <img id="visor-img" alt="">
+        </div>
+        <aside class="visor__painel" id="painel" aria-label="Sua avaliação e análises">
+          <div id="resumo-visor"></div>
+          <div id="painel-conteudo"></div>
+        </aside>
       </div>
       <div class="visor__rodape">
         <div class="visor__ctl">

@@ -10,7 +10,8 @@ import { $, el, limpar, formatarData, idPublico, urlImagemSegura, iniciarPagina 
 import {
   listarLaminas, contarVotos, minhasAvaliacoes, proximoId, criarLamina, atualizarLamina,
   excluirLamina, salvarAvaliacao, salvarComplementoAvaliacao, entrar, uidAtual, ErroFirestore,
-} from './firestore.js?v=5';
+  resumoAvaliacoes,
+} from './firestore.js?v=6';
 import { comprimirImagem } from './imagem.js?v=5';
 import {
   situacaoModelo, carregarModelo, modeloPronto, classificarLote, blobDeDataUrl, csv, baixarTexto,
@@ -31,6 +32,7 @@ const SIGLAS = new Set(CLASSES.map((c) => c[0]));
 
 iniciarPagina('catalogo');
 
+const PREF_CHAVE = 'citoilumina.exibir';
 const estado = {
   laminas: [],
   proximo: null,
@@ -42,7 +44,55 @@ const estado = {
   minhas: new Map(), // slideId -> minha avaliação
   selecionadas: new Set(),
   revelarIA: false, // o usuário aceitou ver a IA antes de avaliar (pode influenciar a avaliação cega)
+  mostrarIA: lerPrefs().ia === true, // opt-in: classificações humanas e predições da IA nos cartões
+  mostrarVotos: lerPrefs().votos === true, // opt-in: contagem de votos nos cartões
+  resumo: null, // Map(slideId -> avaliações) quando já carregado
+  resumoCarregando: false,
+  resumoErro: false,
 };
+
+function lerPrefs() {
+  try { return JSON.parse(localStorage.getItem(PREF_CHAVE) || '{}') || {}; } catch (e) { return {}; }
+}
+function salvarPrefs() {
+  try { localStorage.setItem(PREF_CHAVE, JSON.stringify({ ia: estado.mostrarIA, votos: estado.mostrarVotos })); } catch (e) { /* navegador sem armazenamento */ }
+}
+
+/** Consenso humano: classe com maioria das avaliações, com no mínimo `votosParaConsenso`. */
+function consensoHumano(lista) {
+  const votos = (lista || []).map((x) => x.classificacao).filter((c) => SIGLAS.has(c));
+  if (votos.length < CATALOGO.votosParaConsenso) return null;
+  const cont = {};
+  for (const v of votos) cont[v] = (cont[v] || 0) + 1;
+  const [sigla, n] = Object.entries(cont).sort((a, b) => b[1] - a[1])[0];
+  return n > votos.length / 2 ? { sigla, n, total: votos.length } : null;
+}
+
+/** Última predição de IA registrada nas avaliações desta lâmina (se houver). */
+function iaRegistrada(lista) {
+  const r = (lista || []).find((x) => x.ia);
+  if (!r) return null;
+  const conf = typeof r.confianca === 'number' ? ` (${Math.round(r.confianca * 100)}%)` : '';
+  return `${r.ia}${conf}`;
+}
+
+async function carregarResumo() {
+  if (estado.resumoCarregando || estado.resumo) return;
+  estado.resumoCarregando = true;
+  estado.resumoErro = false;
+  renderizar();
+  try {
+    const { mapa } = await resumoAvaliacoes();
+    estado.resumo = mapa;
+  } catch (e) {
+    estado.resumoErro = true;
+    console.warn('Classificações indisponíveis:', e);
+  } finally {
+    estado.resumoCarregando = false;
+    renderizar();
+    if (visor.open) desenharResumoVisor();
+  }
+}
 
 const grade = $('#grade');
 const status = $('#status');
@@ -177,7 +227,10 @@ function cartao(l) {
       el('span', { class: 'lamina__id', title: id.oculto ? 'ID original ocultado por privacidade' : null }, id.texto),
       el('span', { class: 'lamina__data' }, formatarData(l.date || l.createdAt))),
     l.pasta ? el('span', { class: 'lamina__pasta' }, `Pasta: ${l.pasta}`) : null,
-    el('span', { class: `votos ${selo.classe}` }, selo.texto)));
+    estado.mostrarIA ? blocoClassificacoes(l) : null,
+    estado.mostrarVotos
+      ? el('span', { class: `votos ${selo.classe}` }, selo.texto)
+      : el('span', { class: 'votos votos--oculto' }, 'Votos ocultos')));
   const caixa = el('input', {
     type: 'checkbox', checked: estado.selecionadas.has(l.id), 'aria-label': `Selecionar ${id.texto} para análise em lote`,
     onchange: (ev) => {
@@ -188,9 +241,28 @@ function cartao(l) {
   return el('div', { class: 'lamina-wrap' }, botao, el('label', { class: 'sel', title: 'Selecionar para análise em lote' }, caixa, 'Selecionar'));
 }
 
+/** Bloco do cartão com a classificação humana (consenso) e a predição da IA registrada. */
+function blocoClassificacoes(l) {
+  if (estado.resumoCarregando || (!estado.resumo && !estado.resumoErro)) {
+    return el('span', { class: 'lamina__resumo pequeno' }, 'Carregando classificações…');
+  }
+  if (estado.resumoErro || !estado.resumo) {
+    return el('span', { class: 'lamina__resumo pequeno' }, 'Classificações indisponíveis.');
+  }
+  const lista = estado.resumo.get(l.id) || [];
+  const cons = consensoHumano(lista);
+  const ia = iaRegistrada(lista);
+  return el('span', { class: 'lamina__resumo' },
+    el('span', { class: 'lamina__res-linha' }, el('strong', {}, 'Humano: '),
+      cons ? `${cons.sigla} (${cons.n} de ${cons.total})` : (lista.length ? 'sem consenso' : 'sem avaliações')),
+    el('span', { class: 'lamina__res-linha' }, el('strong', {}, 'IA: '),
+      ia || 'sem análise registrada'));
+}
+
 function renderizar() {
   limpar(grade);
   atualizarPastas();
+  if (estado.mostrarIA && !estado.resumo && !estado.resumoCarregando && !estado.resumoErro) carregarResumo();
   const lista = filtradas();
   for (const l of lista) grade.append(cartao(l));
   contagemEl.textContent = `${lista.length} de ${estado.laminas.length} carregadas`;
@@ -258,16 +330,43 @@ function abrirVisor(l) {
   const id = idPublico(l.patientId);
   const n = votosDe(l);
   visorTitulo.textContent = id.texto;
-  visorInfo.textContent =
-    `Data: ${formatarData(l.date || l.createdAt)} · ${seloVotos(n).texto} · ` +
-    'A classificação fica oculta: a avaliação é cega.';
+  visorInfo.textContent = textoInfoVisor(l, n);
   visorImg.alt = `Campo microscópico da ${id.texto}`;
   visorImg.onload = ajustarVista;
   visorImg.src = urlImagemSegura(l.imageUrl);
   if (visorImg.complete && visorImg.naturalWidth) ajustarVista();
   desenharPainel();
+  desenharResumoVisor();
   visor.showModal();
   palco.focus();
+}
+
+function textoInfoVisor(l, n) {
+  const votos = estado.mostrarVotos ? seloVotos(n).texto : 'votos ocultos';
+  return `Data: ${formatarData(l.date || l.createdAt)} · ${votos}`;
+}
+
+/** Resumo no topo do painel: aparece só com as opções de exibição ligadas. */
+function desenharResumoVisor() {
+  const caixa = $('#resumo-visor');
+  limpar(caixa);
+  if (!atual || (!estado.mostrarIA && !estado.mostrarVotos)) return;
+  const linhas = [];
+  if (estado.mostrarVotos) linhas.push(el('p', {}, el('strong', {}, 'Votos: '), seloVotos(votosDe(atual)).texto));
+  if (estado.mostrarIA) {
+    if (estado.resumoCarregando || (!estado.resumo && !estado.resumoErro)) {
+      linhas.push(el('p', { class: 'pequeno' }, 'Carregando classificações…'));
+    } else if (estado.resumoErro || !estado.resumo) {
+      linhas.push(el('p', { class: 'pequeno' }, 'Classificações indisponíveis no momento.'));
+    } else {
+      const lista = estado.resumo.get(atual.id) || [];
+      const cons = consensoHumano(lista);
+      linhas.push(el('p', {}, el('strong', {}, 'Classificação humana: '),
+        cons ? `${cons.sigla} (${cons.n} de ${cons.total} avaliações)` : (lista.length ? 'sem consenso ainda' : 'sem avaliações')));
+      linhas.push(el('p', {}, el('strong', {}, 'Predição da IA registrada: '), iaRegistrada(lista) || 'nenhuma análise registrada'));
+    }
+  }
+  caixa.append(el('div', { class: 'resumo-visor', role: 'status' }, ...linhas));
 }
 
 $('#zoom-mais').addEventListener('click', () => zoomPara(1.4));
@@ -350,6 +449,27 @@ function listaClasses(nome, marcada) {
     el('strong', {}, sigla), ` — ${descricao}`));
 }
 
+/** Botões das 8 classes de Bethesda: um toque escolhe (aria-pressed). */
+function gradeBethesda(marcada, aoEscolher) {
+  let escolhida = SIGLAS.has(marcada) ? marcada : null;
+  const botoes = CLASSES.map(([sigla, descricao]) => {
+    const b = el('button', {
+      type: 'button', class: 'bethesda-btn', 'data-sigla': sigla,
+      'aria-pressed': String(sigla === escolhida), title: descricao,
+    }, el('strong', {}, sigla), el('span', {}, descricao));
+    b.addEventListener('click', () => {
+      escolhida = sigla;
+      for (const x of botoes) x.setAttribute('aria-pressed', String(x.dataset.sigla === sigla));
+      aoEscolher?.(sigla);
+    });
+    return b;
+  });
+  return {
+    grade: el('div', { class: 'bethesda-grade', role: 'group', 'aria-label': 'Classificação Bethesda' }, ...botoes),
+    valor: () => escolhida,
+  };
+}
+
 function desenharPainel(refazer = false) {
   limpar(painelEl);
   const l = atual;
@@ -360,37 +480,46 @@ function desenharPainel(refazer = false) {
 
   if (minha && !refazer) {
     painelEl.append(el('div', { class: 'aviso aviso--ok' },
-      el('strong', {}, 'Sua avaliação: '), minha.classification || '—', ' ',
+      el('strong', {}, 'Sua classificação: '), minha.classification || '—', ' ',
       el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: () => desenharPainel(true) },
         'Refazer minha avaliação')));
   } else {
-    const nome = 'aval-classe';
+    const avaliacao = gradeBethesda(minha?.classification);
     const desc = el('textarea', { rows: 2, maxlength: 2000, 'aria-label': 'Descrição morfológica (opcional)', placeholder: 'Descrição morfológica (opcional)' });
     const obs = el('textarea', { rows: 2, maxlength: 2000, 'aria-label': 'Observações (opcional)', placeholder: 'Observações (opcional)' });
     if (minha) { desc.value = minha.morphologyDescription || ''; obs.value = minha.notes || ''; }
-    const salvar = el('button', { class: 'btn', type: 'submit' }, 'Salvar avaliação');
+    const salvar = el('button', { class: 'btn btn--bloco', type: 'submit' }, minha ? 'Salvar nova avaliação' : 'Salvar minha avaliação');
     const form = el('form', { class: 'aval-form', novalidate: true,
       onsubmit: async (ev) => {
         ev.preventDefault();
         caixa.hidden = true;
-        const marcada = form.querySelector(`input[name="${nome}"]:checked`);
-        if (!marcada || !SIGLAS.has(marcada.value)) { falha(new Error('Escolha uma classificação.')); return; }
+        const marcada = avaliacao.valor();
+        if (!marcada || !SIGLAS.has(marcada)) { falha(new Error('Escolha uma classificação de Bethesda.')); return; }
         salvar.disabled = true;
         try {
           const a = await salvarAvaliacao({
-            slideId: l.id, classificacao: marcada.value, descricao: desc.value.trim(), observacoes: obs.value.trim(),
+            slideId: l.id, classificacao: marcada, descricao: desc.value.trim(), observacoes: obs.value.trim(),
           });
           estado.minhas.set(l.id, a);
           const antes = estado.votos?.get(l.id) || 0;
           if (estado.votos && !minha) estado.votos.set(l.id, antes + 1);
+          if (estado.resumo) {
+            const lista = estado.resumo.get(l.id) || [];
+            lista.push({ classificacao: marcada, ia: null, confianca: null });
+            estado.resumo.set(l.id, lista);
+          }
           desenharPainel();
           renderizar();
           atualizarInfoVisor();
         } catch (e) { falha(e); salvar.disabled = false; }
       } },
-    el('p', { class: 'pequeno' }, minha ? 'Refazendo a sua avaliação:' : 'Avalie esta lâmina (a avaliação é cega):'),
-    el('div', { class: 'opcoes' }, listaClasses(nome, minha?.classification)),
-    desc, obs, salvar);
+    el('h3', { class: 'painel__titulo' }, minha ? 'Refazer sua avaliação' : 'Sua classificação (Bethesda)'),
+    el('p', { class: 'pequeno' }, 'Toque na classe. A avaliação é cega: as classificações das outras pessoas só aparecem se você ligar a opção no topo da página.'),
+    avaliacao.grade,
+    el('details', { class: 'detalhes-texto' },
+      el('summary', {}, 'Descrição e observações (opcional)'),
+      desc, obs),
+    salvar);
     painelEl.append(form);
   }
 
@@ -399,7 +528,9 @@ function desenharPainel(refazer = false) {
       el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: () => abrirFormulario(l) }, 'Editar minha lâmina'),
       el('button', { class: 'btn btn--sec btn--mini', type: 'button', onclick: (ev) => confirmarExclusao(ev.currentTarget, l, falha) }, 'Excluir minha lâmina')));
   }
-  painelEl.append(painelAnalises(l, minha, falha));
+  painelEl.append(el('details', { class: 'detalhes-ia' },
+    el('summary', {}, 'Análise por IA e validação externa'),
+    painelAnalises(l, minha, falha)));
   painelEl.append(caixa);
 }
 
@@ -423,9 +554,8 @@ function confirmarExclusao(botao, l, falha) {
 
 function atualizarInfoVisor() {
   if (!atual) return;
-  visorInfo.textContent =
-    `Data: ${formatarData(atual.date || atual.createdAt)} · ${seloVotos(votosDe(atual)).texto} · ` +
-    'A classificação fica oculta: a avaliação é cega.';
+  visorInfo.textContent = textoInfoVisor(atual, votosDe(atual));
+  desenharResumoVisor();
 }
 
 // ------------------------------------------------ IA, validação externa, comparação
@@ -826,6 +956,158 @@ buscaEl.addEventListener('input', renderizar);
 filtroVotosEl.addEventListener('change', renderizar);
 filtroPastaEl.addEventListener('change', renderizar);
 maisBtn.addEventListener('click', carregarMais);
+
+// -------------------------------------------- opções de exibição e download
+
+const mostrarIAEl = $('#mostrar-ia');
+const mostrarVotosEl = $('#mostrar-votos');
+mostrarIAEl.checked = estado.mostrarIA;
+mostrarVotosEl.checked = estado.mostrarVotos;
+mostrarIAEl.addEventListener('change', () => {
+  estado.mostrarIA = mostrarIAEl.checked;
+  salvarPrefs();
+  if (estado.mostrarIA && !estado.resumo) carregarResumo();
+  renderizar();
+  if (visor.open) desenharResumoVisor();
+});
+mostrarVotosEl.addEventListener('change', () => {
+  estado.mostrarVotos = mostrarVotosEl.checked;
+  salvarPrefs();
+  renderizar();
+  if (visor.open) { atualizarInfoVisor(); desenharResumoVisor(); }
+});
+
+const dlDlg = $('#dialogo-download');
+const dlProg = $('#dl-prog');
+const dlErro = $('#dl-erro');
+const dlMsg = $('#dl-msg');
+const dlIniciar = $('#dl-iniciar');
+const dlCancelar = $('#dl-cancelar');
+let dlCancelador = null;
+
+const NOME_CLASSE = (s) => String(s).replace(/[^\w.-]+/g, '_');
+
+/** Carrega o JSZip (gerador de .zip) do cdnjs sob demanda. */
+function garantirJSZip() {
+  if (window.JSZip) return Promise.resolve();
+  return new Promise((ok, falha) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload = () => ok();
+    s.onerror = () => falha(new Error('Não foi possível carregar o gerador de .zip. Verifique a conexão.'));
+    document.head.append(s);
+  });
+}
+
+/** Lê todas as lâminas do catálogo, página por página. */
+async function todasAsLaminas(sinal) {
+  const saida = [];
+  let token = null;
+  do {
+    const { itens, proximo } = await listarLaminas({ tamanho: 100, token, sinal });
+    for (const it of itens) if (urlImagemSegura(it.imageUrl)) saida.push(it);
+    token = proximo;
+    dlMsg.textContent = `Lendo o catálogo: ${saida.length} lâminas…`;
+  } while (token);
+  return saida;
+}
+
+async function baixarPorClasse(fonte, sinal) {
+  dlMsg.textContent = 'Lendo o catálogo…';
+  const lams = await todasAsLaminas(sinal);
+  if (!lams.length) throw new Error('O catálogo não tem lâminas para baixar.');
+
+  let resumo = estado.resumo;
+  if (fonte === 'humano' && !resumo) {
+    dlMsg.textContent = 'Lendo as avaliações…';
+    resumo = (await resumoAvaliacoes({ sinal })).mapa;
+  }
+
+  const classes = new Map(); // id -> { classe, origem, confianca }
+  if (fonte === 'ia') {
+    dlMsg.textContent = 'Preparando a IA neste navegador…';
+    const pronto = await prepararIA(dlMsg, dlProg);
+    if (!pronto) throw new Error('A IA não pôde ser carregada.');
+    dlProg.hidden = false; dlProg.max = lams.length; dlProg.value = 0;
+    const blobs = [];
+    for (const l of lams) blobs.push(await blobDeDataUrl(urlImagemSegura(l.imageUrl)));
+    const saida = await classificarLote(blobs, {
+      robustez: false, sinal,
+      aoItem: (i) => { dlProg.value = i + 1; dlMsg.textContent = `IA analisando ${i + 1} de ${lams.length}…`; },
+    });
+    if (sinal?.aborted) throw new DOMException('Cancelado', 'AbortError');
+    saida.forEach((s, i) => {
+      classes.set(lams[i].id, s.resultado
+        ? { classe: s.resultado.sigla, origem: 'IA', confianca: s.resultado.confianca }
+        : { classe: 'sem-analise', origem: 'IA', confianca: null });
+    });
+  } else {
+    for (const l of lams) {
+      const c = consensoHumano(resumo.get(l.id) || []);
+      classes.set(l.id, c ? { classe: c.sigla, origem: 'humano', confianca: null } : { classe: 'sem-consenso', origem: 'humano', confianca: null });
+    }
+  }
+
+  dlProg.hidden = false; dlProg.max = lams.length; dlProg.value = 0;
+  dlMsg.textContent = 'Gerando o arquivo .zip…';
+  await garantirJSZip();
+  const zip = new window.JSZip();
+  const linhas = [['arquivo', 'id', 'pasta', 'data', 'classe', 'origem', 'confianca_ia']];
+  for (let i = 0; i < lams.length; i++) {
+    if (sinal?.aborted) throw new DOMException('Cancelado', 'AbortError');
+    const l = lams[i];
+    const info = classes.get(l.id);
+    const id = idPublico(l.patientId).texto;
+    const arq = `${String(i + 1).padStart(4, '0')}_${NOME_CLASSE(id)}.jpg`;
+    const bytes = await (await fetch(urlImagemSegura(l.imageUrl))).arrayBuffer();
+    zip.file(`${NOME_CLASSE(info.classe)}/${arq}`, bytes);
+    linhas.push([arq, id, l.pasta || '', l.date || '', info.classe, info.origem,
+      info.confianca != null ? (info.confianca * 100).toFixed(1).replace('.', ',') : '']);
+    dlProg.value = i + 1;
+    if (i % 25 === 0) dlMsg.textContent = `Empacotando ${i + 1} de ${lams.length}…`;
+  }
+  zip.file('indice.csv', csv(linhas));
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' }, (m) => {
+    dlMsg.textContent = `Compactando: ${Math.round(m.percent)}%`;
+  });
+  const data = new Date().toISOString().slice(0, 10);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `citoilumina-classes-${fonte === 'ia' ? 'ia' : 'humano'}-${data}.zip`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  dlMsg.textContent = `Pronto: ${lams.length} imagens em pastas por classe.`;
+}
+
+$('#baixar-classes').addEventListener('click', () => {
+  dlErro.hidden = true; dlProg.hidden = true; dlMsg.textContent = '';
+  dlIniciar.disabled = false;
+  dlDlg.showModal();
+});
+$('#dl-fechar').addEventListener('click', () => { dlCancelador?.abort(); dlDlg.close(); });
+dlCancelar.addEventListener('click', () => { dlCancelador?.abort(); dlDlg.close(); });
+dlIniciar.addEventListener('click', async () => {
+  const fonte = dlDlg.querySelector('input[name="dl-fonte"]:checked')?.value || 'ia';
+  dlErro.hidden = true;
+  dlIniciar.disabled = true;
+  dlCancelador = new AbortController();
+  try {
+    await baixarPorClasse(fonte, dlCancelador.signal);
+  } catch (e) {
+    if (e?.name !== 'AbortError') {
+      dlErro.hidden = false;
+      dlErro.textContent = e.message || String(e);
+    } else {
+      dlMsg.textContent = 'Download cancelado.';
+    }
+  } finally {
+    dlIniciar.disabled = false;
+    dlCancelador = null;
+  }
+});
 
 const painelConexao = $('#conexao');
 const textoConexao = $('#conexao-texto');

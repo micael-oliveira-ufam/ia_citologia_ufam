@@ -8,6 +8,7 @@ class Cores {
   static const tintaFraca = Color(0xFF4A5C6B);
   static const linha = Color(0xFFDCE5EB);
   static const teal = Color(0xFF0E6B7B);
+  static const tealProfundo = Color(0xFF0A4D5A);
   static const tealClaro = Color(0xFFE4F1F3);
   static const alerta = Color(0xFF8A6410);
   static const alertaFundo = Color(0xFFFFF6E8);
@@ -72,6 +73,49 @@ ThemeData construirTema() {
       minVerticalPadding: 12,
     ),
     dividerTheme: const DividerThemeData(color: Cores.linha, space: 1),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: Cores.superficie,
+      indicatorColor: Cores.tealClaro,
+      surfaceTintColor: Colors.transparent,
+      height: 72,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      labelTextStyle: WidgetStatePropertyAll(
+        TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Cores.tintaFraca),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Cores.superficie,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Cores.linha),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Cores.linha),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Cores.teal, width: 2),
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Cores.tinta,
+      contentTextStyle: const TextStyle(color: Colors.white, fontSize: 15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: Cores.superficie,
+      side: const BorderSide(color: Cores.linha),
+      labelStyle: const TextStyle(color: Cores.tinta, fontWeight: FontWeight.w600),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: Cores.superficie,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    ),
     textTheme: const TextTheme(
       headlineSmall: TextStyle(
         color: Cores.tinta,

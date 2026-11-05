@@ -23,21 +23,49 @@ class TelaEscolhaPerfil extends StatelessWidget {
               shrinkWrap: true,
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
               children: [
-                const Icon(Icons.favorite, size: 48, color: Cores.teal),
-                const SizedBox(height: 16),
-                Text(
-                  'Colo do útero\ncom inteligência artificial',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'UFAM · SEMSA',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    letterSpacing: 1.6,
-                    color: Cores.tintaFraca,
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Cores.teal, Cores.tealProfundo],
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.biotech_outlined,
+                          size: 44, color: Colors.white),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'CitoIlumina',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Colo do útero com inteligência artificial',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 15,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'UFAM · SEMSA',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          fontSize: 12,
+                          letterSpacing: 1.6,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 28),

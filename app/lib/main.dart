@@ -7,6 +7,7 @@ import 'servicos/classificador.dart';
 import 'servicos/gerenciador_modelo.dart';
 import 'servicos/modelo_risco.dart';
 import 'telas/escolha_perfil.dart';
+import 'telas/tela_splash.dart';
 import 'tema.dart';
 
 void main() {
@@ -16,9 +17,16 @@ void main() {
 class ColoIaApp extends StatelessWidget {
   /// [gerenciadorModelo] só é informado em testes (um gerenciador inerte, que
   /// não usa rede nem disco).
-  const ColoIaApp({super.key, this.gerenciadorModelo});
+  const ColoIaApp({
+    super.key,
+    this.gerenciadorModelo,
+    this.exibirSplash = true,
+  });
 
   final GerenciadorModelo? gerenciadorModelo;
+
+  /// Testes desligam a splash (ela usa um temporizador).
+  final bool exibirSplash;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +34,9 @@ class ColoIaApp extends StatelessWidget {
       title: 'CitoIlumina',
       debugShowCheckedModeBanner: false,
       theme: construirTema(),
-      home: Raiz(gerenciadorModelo: gerenciadorModelo),
+      home: exibirSplash
+          ? TelaSplash(proxima: Raiz(gerenciadorModelo: gerenciadorModelo))
+          : Raiz(gerenciadorModelo: gerenciadorModelo),
     );
   }
 }
