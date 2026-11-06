@@ -381,6 +381,7 @@ function ajustarVista() {
   const h = visorImg.naturalHeight || 1;
   const pw = palco.clientWidth;
   const ph = palco.clientHeight;
+  if (!pw || !ph) return; // visor ainda fechado: a área tem tamanho zero (evita zoom NaN)
   vista.ajuste = Math.min(pw / w, ph / h);
   vista.escala = vista.ajuste;
   vista.x = (pw - w * vista.escala) / 2;
@@ -413,6 +414,7 @@ function abrirVisor(l) {
   desenharPainel();
   desenharResumoVisor();
   visor.showModal();
+  requestAnimationFrame(() => { if (visorImg.naturalWidth) ajustarVista(); });
   palco.focus();
 }
 

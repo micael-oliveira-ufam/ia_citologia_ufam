@@ -40,6 +40,16 @@ const List<Pessoa> equipe = [
     vinculo: 'Faculdade de Ciências Farmacêuticas, UFAM',
   ),
   Pessoa(
+    nome: 'Profa. Dra. Fabíola Nakamura',
+    papel: 'Pesquisadora parceira em computação',
+    vinculo: 'Instituto de Computação (IComp), UFAM',
+  ),
+  Pessoa(
+    nome: 'Prof. Dr. Felipe Gomes de Oliveira',
+    papel: 'Pesquisador parceiro em computação',
+    vinculo: 'Instituto de Computação (IComp), UFAM',
+  ),
+  Pessoa(
     nome: 'Dra. Ivanete de Lima Sampaio',
     papel: 'Especialista clínica e citopatologista',
     vinculo: 'SEMSA Manaus',
