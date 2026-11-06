@@ -1979,7 +1979,7 @@ def secao_dados_creditos():
     st.markdown("---")
     st.markdown("### Como citar esta plataforma")
     st.code(
-        "OLIVEIRA, M. D. L.; MARTINS, T. R.; NAKAMURA, F.; OLIVEIRA, F. G. "
+        "OLIVEIRA, M. D. L.; NAKAMURA, F.; OLIVEIRA, F. G.; MARTINS, T. R. "
         "Sistema de apoio ao diagnóstico citológico em meio líquido assistido por "
         "inteligência artificial. Faculdade de Ciências Farmacêuticas e Instituto "
         "de Computação, Universidade Federal do Amazonas, em parceria com a "

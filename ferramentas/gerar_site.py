@@ -570,7 +570,7 @@ def sec_dados():
       <div class="ds-nome">{e(d['nome'])}</div><div class="fraco pequeno">{e(d['instituicao'])}</div>
       <p class="fraco">{e(d['descricao'])}</p>
       <p class="pequeno"><a href="{d['url']}" target="_blank" rel="noopener">{d['url']}</a></p></div>{ref}""")
-    citacao = ("OLIVEIRA, M. D. L.; MARTINS, T. R.; NAKAMURA, F.; OLIVEIRA, F. G. "
+    citacao = ("OLIVEIRA, M. D. L.; NAKAMURA, F.; OLIVEIRA, F. G.; MARTINS, T. R. "
                "Sistema de apoio ao diagnóstico citológico em meio líquido assistido por "
                "inteligência artificial. Faculdade de Ciências Farmacêuticas e Instituto "
                "de Computação, Universidade Federal do Amazonas, em parceria com a "
