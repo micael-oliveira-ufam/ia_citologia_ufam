@@ -473,8 +473,8 @@ def sec_validacao():
   <p class="legenda">Em rastreio, o recall de HSIL e SCC é a métrica decisiva: mede quantos casos graves escapariam. HSIL alcançou 99,1% e carcinoma 92,7%, e as sete imagens de carcinoma não reconhecidas foram classificadas como HSIL, ou seja, permaneceram sinalizadas como alteração de alto grau.</p>
   <hr>
   <h3>Curvas de treinamento</h3>
-  <img class="figura-larga" src="img/historico_treinamento.png" alt="Curvas de acurácia e perda de treino e validação por época" loading="lazy">
-  <p class="legenda">A acurácia de treino satura cedo e a de validação oscila, comportamento esperado num conjunto curado. O checkpoint publicado corresponde ao melhor ponto de validação, não à última época.</p>
+  <img class="figura-larga" src="img/curvas_treinamento_convnext.png" alt="Curvas por época do ConvNeXt-Large em 5 folds: acurácia e perda de validação e de treino (A, B), com Swin Transformer V2-B (C, D) e ResNet-50 (E, F) como comparação" loading="lazy">
+  <p class="legenda">Curvas por época do ConvNeXt-Large nos 5 folds da validação cruzada (A: acurácia; B: perda). Linhas contínuas com marcadores são a validação; tracejadas, o treino. A parada foi antecipada após 5 épocas sem melhora na acurácia de validação, entre a 13ª e a 15ª época; em cada fold restauram-se os pesos da melhor época. Swin Transformer V2-B (C, D) e ResNet-50 (E, F) são comparações do mesmo estudo.</p>
   <hr>
   <h3>O que estes números ainda não dizem</h3>
   <ul class="prosa">

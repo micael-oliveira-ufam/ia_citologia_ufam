@@ -9,7 +9,7 @@ Estrutura esperada:
     app.py
     logo_ufam.png, logo-icomp.png, semsa.png
     assets/matriz_confusao.png
-    assets/historico_treinamento.png        (opcional)
+    assets/curvas_treinamento_convnext.png     (opcional)
     exemplos/*.jpg
     .streamlit/config.toml                  (tema claro)
 """
@@ -62,7 +62,7 @@ LOGO_UFAM = os.path.join(BASE_DIR, "logo_ufam.png")
 LOGO_ICOMP = os.path.join(BASE_DIR, "logo-icomp.png")
 LOGO_SEMSA = os.path.join(BASE_DIR, "semsa.png")
 FIG_MATRIZ = os.path.join(ASSETS_DIR, "matriz_confusao.png")
-FIG_HISTORICO = os.path.join(ASSETS_DIR, "historico_treinamento.png")
+FIG_HISTORICO = os.path.join(ASSETS_DIR, "curvas_treinamento_convnext.png")
 
 # -----------------------------------------------------------------------------
 # PARÂMETROS COMPARTILHADOS COM O APLICATIVO ANDROID
