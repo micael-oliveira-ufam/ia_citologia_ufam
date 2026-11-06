@@ -6,6 +6,7 @@ import '../config.dart';
 import '../servicos/classificador.dart';
 import '../tema.dart';
 import 'aba_catalogo.dart' show FotoLamina;
+import 'chips_classificacao.dart';
 import 'form_lamina.dart';
 
 /// Detalhe de uma lâmina: foto com zoom e avaliação cega.
@@ -179,6 +180,7 @@ class _TelaLaminaState extends State<TelaLamina> {
         final votos = _c.votosDe(_l.id);
         final logado = _c.sessao.logado;
         final mostrarFormulario = logado && (minha == null || _refazendo);
+        final chips = chipsDaLamina(minha, _c.predicaoDe(_l.id));
         return Scaffold(
           appBar: AppBar(
             title: Text(_l.idPublico.texto),
@@ -214,7 +216,19 @@ class _TelaLaminaState extends State<TelaLamina> {
                     borderRadius: BorderRadius.circular(12),
                     child: AspectRatio(
                       aspectRatio: 4 / 3,
-                      child: FotoLamina(lamina: _l, fit: BoxFit.contain),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          FotoLamina(lamina: _l, fit: BoxFit.contain),
+                          if (chips.isNotEmpty)
+                            Positioned(
+                              left: 10,
+                              right: 10,
+                              bottom: 10,
+                              child: ChipsClassificacao(itens: chips),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

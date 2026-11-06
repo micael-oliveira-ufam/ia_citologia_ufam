@@ -310,24 +310,30 @@ function corSobre(hex) {
   return contraste(1) >= contraste(escuro) ? '#ffffff' : '#14232f';
 }
 
-/** Destaque sobre a foto: classificação humana (consenso) e da IA, na cor da gravidade. */
+/** Selos sobre a foto: classificação humana (consenso) e da IA, na cor da gravidade. */
 function chipsClassificacao(l) {
-  if (!estado.mostrarIA || !estado.resumo) return null;
+  if (!estado.mostrarIA || !estado.resumo) return [];
   const lista = estado.resumo.get(l.id) || [];
   const cons = consensoHumano(lista);
   const ia = siglaIA(lista);
   const itens = [];
   if (cons) itens.push(['Humano', cons.sigla]);
   if (ia) itens.push(['IA', ia]);
-  if (!itens.length) return null;
-  return el('div', { class: 'lamina__chips' }, ...itens.map(([rotulo, sigla]) => {
+  return itens.map(([rotulo, sigla]) => {
     const cor = corDaClasse(sigla);
     return el('span', {
       class: 'chip-classe',
       style: `background:${cor};color:${corSobre(cor)}`,
       title: `${rotulo}: ${CATEGORIAS[sigla]?.nome || sigla}`,
     }, `${rotulo} · ${sigla}`);
-  }));
+  });
+}
+
+/** Mantém os selos do visor atualizados com a lâmina aberta e o resumo carregado. */
+function desenharChipsVisor() {
+  const caixa = $('#visor-chips');
+  limpar(caixa);
+  if (atual) caixa.append(...chipsClassificacao(atual));
 }
 
 function cartao(l) {
@@ -346,7 +352,7 @@ function cartao(l) {
       ? el('span', { class: 'lamina__selo' }, souCriador(l) ? 'Sua lâmina' : 'Classificação oculta')
       : null,
     estado.minhas.has(l.id) ? el('span', { class: 'lamina__selo lamina__selo--esq' }, 'Avaliada por você') : null,
-    chipsClassificacao(l)),
+    el('div', { class: 'lamina__chips' }, ...chipsClassificacao(l))),
   el('div', { class: 'lamina__corpo' },
     el('div', { class: 'lamina__linha' },
       el('span', { class: 'lamina__id', title: id.oculto ? 'ID original ocultado por privacidade' : null }, id.texto),
@@ -468,6 +474,7 @@ function abrirVisor(l) {
   if (visorImg.complete && visorImg.naturalWidth) ajustarVista();
   desenharPainel();
   desenharResumoVisor();
+  desenharChipsVisor();
   visor.showModal();
   requestAnimationFrame(() => { if (visorImg.naturalWidth) ajustarVista(); });
   palco.focus();
@@ -480,6 +487,7 @@ function textoInfoVisor(l, n) {
 
 /** Resumo no topo do painel: aparece só com as opções de exibição ligadas. */
 function desenharResumoVisor() {
+  desenharChipsVisor();
   const caixa = $('#resumo-visor');
   limpar(caixa);
   if (!atual || (!estado.mostrarIA && !estado.mostrarVotos)) return;

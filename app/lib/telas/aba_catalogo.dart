@@ -6,6 +6,7 @@ import '../catalogo/modelos.dart';
 import '../config.dart';
 import '../servicos/classificador.dart';
 import '../tema.dart';
+import 'chips_classificacao.dart';
 import 'form_lamina.dart';
 import 'tela_lamina.dart';
 
@@ -368,6 +369,7 @@ class _CartaoLamina extends StatelessWidget {
             : quorum
                 ? '$votos votos · quórum atingido'
                 : '$votos/$catalogoVotosParaQuorum avaliações';
+    final chips = chipsDaLamina(minha, controle.predicaoDe(lamina.id));
     final rotuloSelo = minha != null
         ? 'sua avaliação: ${minha.classificacao.sigla}'
         : 'pendente de sua avaliação';
@@ -401,6 +403,13 @@ class _CartaoLamina extends StatelessWidget {
                         cor: minha?.classificacao.cor,
                       ),
                     ),
+                    if (chips.isNotEmpty)
+                      Positioned(
+                        left: 8,
+                        right: 8,
+                        bottom: 8,
+                        child: ChipsClassificacao(itens: chips),
+                      ),
                   ],
                 ),
               ),

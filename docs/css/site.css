@@ -279,6 +279,8 @@ html.js .secao.ativa { display: block; }
 .lamina__foto { aspect-ratio: 4 / 3; background: #0d1a22; position: relative; }
 .lamina__foto img { width: 100%; height: 100%; object-fit: cover; }
 .lamina__chips { position: absolute; left: 8px; bottom: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+.visor__chips { left: 14px; bottom: 14px; right: 14px; z-index: 2; }
+.visor__palco .chip-classe { font-size: 13px; }
 .chip-classe { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,.4); letter-spacing: .01em; }
 .lamina__selo { position: absolute; top: 8px; right: 8px; background: rgba(13,26,34,.85); color: #e7eef2; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
 .lamina__corpo { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
