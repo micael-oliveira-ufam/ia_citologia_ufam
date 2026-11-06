@@ -129,6 +129,8 @@ async function carregarResumo() {
 const grade = $('#grade');
 const status = $('#status');
 const maisBtn = $('#mais');
+const todasBtn = $('#todas');
+const notaParcial = $('#nota-parcial');
 const contagemEl = $('#contagem');
 const buscaEl = $('#busca');
 const filtroVotosEl = $('#filtro-votos');
@@ -261,10 +263,18 @@ function atualizarFiltroLesao() {
   if (!estado.mostrarIA) filtroLesaoEl.value = 'todas';
 }
 
-/** Para filtrar por tipo, o catálogo inteiro precisa estar carregado (não só a primeira página). */
-async function garantirCatalogoCompleto() {
-  if (!estado.resumo && !estado.resumoCarregando) await carregarResumo();
-  while (!estado.fim && !estado.erro) await carregarMais();
+/** Carrega o catálogo inteiro. Só é chamada por clique do usuário, nunca automaticamente. */
+async function carregarTodas() {
+  todasBtn.disabled = true;
+  try {
+    if (!estado.resumo && !estado.resumoCarregando) await carregarResumo();
+    while (!estado.fim && !estado.erro) {
+      if (estado.carregando) { await new Promise((r) => setTimeout(r, 150)); continue; }
+      await carregarMais();
+    }
+  } catch (e) { console.warn(e); }
+  finally { todasBtn.disabled = false; }
+  renderizar();
 }
 
 function filtradas() {
@@ -357,6 +367,8 @@ function renderizar() {
   else mostrarStatus(null);
 
   maisBtn.hidden = estado.fim || estado.carregando || !!estado.erro;
+  todasBtn.hidden = estado.fim || estado.carregando || !!estado.erro;
+  notaParcial.hidden = estado.fim || !estado.mostrarIA || filtroLesaoEl.value === 'todas';
   atualizarBarraSelecao();
 }
 
@@ -1082,11 +1094,8 @@ buscaEl.addEventListener('input', renderizar);
 filtroVotosEl.addEventListener('change', renderizar);
 filtroPastaEl.addEventListener('change', renderizar);
 maisBtn.addEventListener('click', carregarMais);
-filtroLesaoEl.addEventListener('change', async () => {
-  if (filtroLesaoEl.value === 'todas') { renderizar(); return; }
-  try { await garantirCatalogoCompleto(); } catch (e) { console.warn(e); }
-  renderizar();
-});
+todasBtn.addEventListener('click', carregarTodas);
+filtroLesaoEl.addEventListener('change', () => renderizar());
 
 // -------------------------------------------- opções de exibição e download
 

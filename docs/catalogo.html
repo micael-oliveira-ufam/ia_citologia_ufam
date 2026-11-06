@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#0e6b7b">
   <link rel="icon" href="img/logo-plataforma-icone.svg">
   <link rel="preload" href="fontes/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/site.css?v=4">
+  <link rel="stylesheet" href="css/site.css?v=5">
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
@@ -115,9 +115,11 @@
 
       <div id="status" hidden></div>
       <div class="grade" id="grade"></div>
-      <p style="text-align:center; margin-top:20px">
+      <p class="pequeno aviso aviso--info" id="nota-parcial" hidden>O filtro por tipo de lesão considera só as lâminas já carregadas. Para filtrar o catálogo inteiro, clique em “Carregar todas as lâminas”.</p>
+      <div class="botoes-catalogo">
         <button class="btn btn--sec" id="mais" type="button" hidden>Carregar mais lâminas</button>
-      </p>
+        <button class="btn btn--sec" id="todas" type="button" hidden>Carregar todas as lâminas</button>
+      </div>
     </div>
 
 <dialog class="visor visor--form" id="lote" aria-labelledby="lote-titulo">
@@ -262,6 +264,6 @@
   </div>
 </footer>
   </div>
-  <script type="module" src="js/catalogo.js?v=12"></script>
+  <script type="module" src="js/catalogo.js?v=13"></script>
 </body>
 </html>

@@ -319,7 +319,11 @@ a, .citacao-ds, .ds-nome, .inst-nome { overflow-wrap: anywhere; }
 /* ---- catálogo: cadastro, avaliação e edição ---- */
 .lamina__selo--esq { right: auto; left: 8px; background: rgba(29,90,69,.9); }
 .painel-aval { padding: 10px 14px; border-top: 1px solid var(--linha); max-height: 36vh; overflow: auto; }
-.aval-form { display: grid; gap: 8px; }
+.aval-form { display: grid; gap: 14px; }
+.acoes-dono { margin-top: 14px; }
+.botoes-catalogo { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+.botoes-catalogo .btn { min-width: 200px; }
+#nota-parcial { margin: 12px 0 0; }
 .aval-form textarea, .form-lamina textarea { width: 100%; font: inherit; padding: .5rem .7rem; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie); color: var(--tinta); }
 .opcoes { display: grid; gap: 4px; }
 .opcao { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; padding: 4px 2px; }
@@ -382,7 +386,10 @@ dialog.visor:not(.visor--form) { width: min(1120px, 96vw); }
 .bethesda-btn[aria-pressed="true"] { border-color: var(--teal); background: var(--teal-claro); box-shadow: inset 0 0 0 1px var(--teal); }
 .bethesda-btn[aria-pressed="true"] strong::after { content: " ✓"; color: var(--teal); }
 .btn--bloco { width: 100%; min-height: 48px; }
-.detalhes-texto, .detalhes-ia { padding: 8px 12px; border: 1px solid var(--linha); border-radius: 12px; background: var(--superficie); }
+.detalhes-texto, .detalhes-ia { padding: 10px 14px; border: 1px solid var(--linha); border-radius: 12px; background: var(--superficie); }
+.detalhes-ia { margin-top: 16px; }
+.detalhes-texto { margin-top: 4px; }
+.btn--bloco { margin-top: 8px; }
 .detalhes-texto summary, .detalhes-ia summary { display: flex; align-items: center; min-height: 40px; font-weight: 600; cursor: pointer; }
 .detalhes-texto .aval-form { padding: 6px 0 2px; }
 .dl-fonte { display: grid; gap: 8px; border: 0; padding: 0; margin: 0 0 12px; }
