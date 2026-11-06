@@ -9,9 +9,9 @@ import { CATALOGO, VALIDADOR_EXTERNO } from './config.js?v=5';
 import { $, el, limpar, formatarData, idPublico, urlImagemSegura, iniciarPagina } from './comum.js';
 import {
   listarLaminas, contarVotos, minhasAvaliacoes, proximoId, criarLamina, atualizarLamina,
-  excluirLamina, salvarAvaliacao, salvarComplementoAvaliacao, entrar, uidAtual, ErroFirestore,
+  excluirLamina, salvarAvaliacao, salvarComplementoAvaliacao, salvarPredicao, resumoPredicoes, entrar, uidAtual, ErroFirestore,
   resumoAvaliacoes,
-} from './firestore.js?v=6';
+} from './firestore.js?v=7';
 import { comprimirImagem } from './imagem.js?v=5';
 import {
   situacaoModelo, carregarModelo, modeloPronto, classificarLote, blobDeDataUrl, csv, baixarTexto,
@@ -68,12 +68,32 @@ function consensoHumano(lista) {
   return n > votos.length / 2 ? { sigla, n, total: votos.length } : null;
 }
 
-/** Última predição de IA registrada nas avaliações desta lâmina (se houver). */
+/** Classe da IA para esta lâmina: a mais frequente entre as predições registradas (ou null). */
+function siglaIA(lista) {
+  const cont = new Map();
+  for (const x of lista || []) if (x.ia) cont.set(x.ia, (cont.get(x.ia) || 0) + 1);
+  if (!cont.size) return null;
+  return [...cont.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+/** Texto da predição da IA para o cartão: classe majoritária, confiança e nº de análises. */
 function iaRegistrada(lista) {
-  const r = (lista || []).find((x) => x.ia);
-  if (!r) return null;
-  const conf = typeof r.confianca === 'number' ? ` (${Math.round(r.confianca * 100)}%)` : '';
-  return `${r.ia}${conf}`;
+  const sigla = siglaIA(lista);
+  if (!sigla) return null;
+  const doGrupo = (lista || []).filter((x) => x.ia);
+  const r = doGrupo.find((x) => x.ia === sigla);
+  const conf = typeof r?.confianca === 'number' ? ` (${Math.round(r.confianca * 100)}%)` : '';
+  const n = doGrupo.filter((x) => x.ia === sigla).length;
+  const analises = doGrupo.length > 1 ? ` · ${n} de ${doGrupo.length} análises` : '';
+  return `${sigla}${conf}${analises}`;
+}
+
+/** Acrescenta uma predição recém-gravada ao resumo já carregado, sem recarregar a página. */
+function adicionarIAResumo(slideId, sigla, confianca) {
+  if (!estado.resumo) return;
+  const lista = estado.resumo.get(slideId) || [];
+  lista.push({ classificacao: null, ia: sigla, confianca });
+  estado.resumo.set(slideId, lista);
 }
 
 async function carregarResumo() {
@@ -82,7 +102,14 @@ async function carregarResumo() {
   estado.resumoErro = false;
   renderizar();
   try {
-    const { mapa } = await resumoAvaliacoes();
+    const [{ mapa }, pred] = await Promise.all([
+      resumoAvaliacoes(),
+      resumoPredicoes().then((r) => r.mapa).catch((e) => { console.warn('Predições indisponíveis:', e); return new Map(); }),
+    ]);
+    for (const [id, lista] of pred) {
+      const atual = mapa.get(id) || [];
+      mapa.set(id, [...atual, ...lista.map((x) => ({ classificacao: null, ia: x.ia, confianca: x.confianca }))]);
+    }
     estado.resumo = mapa;
   } catch (e) {
     estado.resumoErro = true;
@@ -101,6 +128,8 @@ const contagemEl = $('#contagem');
 const buscaEl = $('#busca');
 const filtroVotosEl = $('#filtro-votos');
 const filtroPastaEl = $('#filtro-pasta');
+const filtroLesaoEl = $('#filtro-lesao');
+const notaLesao = $('#nota-lesao');
 const notaVotos = $('#nota-votos');
 
 // ---------------------------------------------------------------- dados
@@ -190,14 +219,57 @@ function atualizarPastas() {
   filtroPastaEl.value = [...filtroPastaEl.options].some((o) => o.value === atual) ? atual : 'todas';
 }
 
+/**
+ * Filtro por tipo de lesão: "h:<classe>" usa o consenso humano, "i:<classe>" a predição da IA;
+ * "__sem__" é a lâmina sem consenso (ou sem análise da IA). Só funciona com as classificações
+ * visíveis (protocolo cego): sem a opção marcada o filtro fica desativado.
+ */
+function passaFiltroLesao(l, valor) {
+  if (valor === 'todas') return true;
+  if (!estado.resumo) return false; // classificações ainda carregando
+  const [fonte, sigla] = valor.split(':');
+  const lista = estado.resumo.get(l.id) || [];
+  const atual = fonte === 'h' ? (consensoHumano(lista)?.sigla || null) : siglaIA(lista);
+  return sigla === '__sem__' ? atual === null : atual === sigla;
+}
+
+function atualizarFiltroLesao() {
+  const atual = filtroLesaoEl.value;
+  limpar(filtroLesaoEl);
+  filtroLesaoEl.append(el('option', { value: 'todas' }, 'Todos os tipos'));
+  const humano = el('optgroup', { label: 'Pela avaliação humana (consenso)' });
+  const ia = el('optgroup', { label: 'Pela predição da IA' });
+  for (const [sigla] of CLASSES) {
+    const nome = CATEGORIAS[sigla]?.nome;
+    const texto = nome ? `${sigla} · ${nome}` : sigla;
+    humano.append(el('option', { value: `h:${sigla}` }, texto));
+    ia.append(el('option', { value: `i:${sigla}` }, texto));
+  }
+  humano.append(el('option', { value: 'h:__sem__' }, 'Sem consenso (menos de 3 avaliações ou sem maioria)'));
+  ia.append(el('option', { value: 'i:__sem__' }, 'Sem análise da IA'));
+  filtroLesaoEl.append(humano, ia);
+  filtroLesaoEl.value = [...filtroLesaoEl.options].some((o) => o.value === atual) ? atual : 'todas';
+  filtroLesaoEl.disabled = !estado.mostrarIA;
+  notaLesao.hidden = estado.mostrarIA;
+  if (!estado.mostrarIA) filtroLesaoEl.value = 'todas';
+}
+
+/** Para filtrar por tipo, o catálogo inteiro precisa estar carregado (não só a primeira página). */
+async function garantirCatalogoCompleto() {
+  if (!estado.resumo && !estado.resumoCarregando) await carregarResumo();
+  while (!estado.fim && !estado.erro) await carregarMais();
+}
+
 function filtradas() {
   const termo = buscaEl.value.trim().toLowerCase();
   const f = filtroVotosEl.value;
   const pasta = filtroPastaEl.value;
+  const lesao = estado.mostrarIA ? filtroLesaoEl.value : 'todas';
   return estado.laminas.filter((l) => {
     if (termo && !idPublico(l.patientId).texto.toLowerCase().includes(termo)) return false;
     if (pasta === '__sem__' && l.pasta) return false;
     if (pasta !== 'todas' && pasta !== '__sem__' && l.pasta !== pasta) return false;
+    if (!passaFiltroLesao(l, lesao)) return false;
     const n = votosDe(l);
     if (f !== 'todas' && n != null) {
       if (f === 'sem' && n !== 0) return false;
@@ -265,7 +337,10 @@ function renderizar() {
   if (estado.mostrarIA && !estado.resumo && !estado.resumoCarregando && !estado.resumoErro) carregarResumo();
   const lista = filtradas();
   for (const l of lista) grade.append(cartao(l));
-  contagemEl.textContent = `${lista.length} de ${estado.laminas.length} carregadas`;
+  const esperandoLesao = estado.mostrarIA && filtroLesaoEl.value !== 'todas' && !estado.resumo;
+  contagemEl.textContent = esperandoLesao
+    ? 'Carregando classificações para filtrar…'
+    : `${lista.length} de ${estado.laminas.length} carregadas`;
 
   if (estado.erro) mostrarStatus('erro');
   else if (estado.carregando) mostrarStatus('carregando');
@@ -603,6 +678,21 @@ function resumoIA(r) {
     r.instavel ? el('div', { class: 'pequeno' }, 'Predição de baixa confiança: trate como indefinida.') : null);
 }
 
+/** Grava a predição da IA no banco (qualquer lâmina). Devolve false se não foi possível. */
+async function registrarPredicao(l, r) {
+  try {
+    await salvarPredicao({
+      slideId: l.id, classificacao: r.sigla,
+      confianca: Math.round(r.confianca * 1000) / 1000, modelo: 'colo-ia-web',
+    });
+    adicionarIAResumo(l.id, r.sigla, r.confianca);
+    return true;
+  } catch (e) {
+    console.warn('Predição não gravada:', e);
+    return false;
+  }
+}
+
 /** Painel "Análises": humana (já acima), IA interna, validação externa e comparação. */
 function painelAnalises(l, minha, falha) {
   const caixa = el('section', { class: 'analises', 'aria-label': 'Análises da lâmina' });
@@ -633,6 +723,10 @@ function painelAnalises(l, minha, falha) {
       if (erro) { iaMsg.textContent = erro; return; }
       iaMsg.textContent = '';
       iaSaida.append(resumoIA(resultado));
+      const gravou = await registrarPredicao(l, resultado);
+      iaSaida.append(el('p', { class: 'pequeno' }, gravou
+        ? 'Predição salva no banco de dados.'
+        : 'Não foi possível salvar a predição agora (verifique a conexão). O resultado continua visível aqui.'));
       if (minha) {
         const novo = await salvarComplementoAvaliacao(l.id, {
           aiClassification: resultado.sigla, aiConfidence: Math.round(resultado.confianca * 1000) / 1000,
@@ -818,7 +912,15 @@ loteRodar.addEventListener('click', async () => {
         loteMsg.textContent = `Analisadas ${i + 1} de ${ativas.length}…`;
       },
     });
-    loteMsg.textContent = `Concluído: ${ativas.length} lâmina(s) analisada(s) pela IA neste aparelho.` +
+    const feitas = ativas.filter((lin) => lin.r);
+    let gravadas = 0;
+    for (let i = 0; i < feitas.length; i++) {
+      loteMsg.textContent = `Salvando predições no banco: ${i + 1} de ${feitas.length}…`;
+      if (await registrarPredicao(feitas[i].l, feitas[i].r)) gravadas++;
+    }
+    loteMsg.textContent = `Concluído: ${ativas.length} lâmina(s) analisada(s) pela IA neste aparelho. ` +
+      `${gravadas} predição(ões) salva(s) no banco de dados` +
+      (gravadas < feitas.length ? `; ${feitas.length - gravadas} não puderam ser salvas agora` : '') + '.' +
       (ativas.length < loteLinhas.length ? ` ${loteLinhas.length - ativas.length} ficaram ocultas para preservar a avaliação cega.` : '');
     loteCsv.disabled = false;
   } catch (e) {
@@ -956,6 +1058,11 @@ buscaEl.addEventListener('input', renderizar);
 filtroVotosEl.addEventListener('change', renderizar);
 filtroPastaEl.addEventListener('change', renderizar);
 maisBtn.addEventListener('click', carregarMais);
+filtroLesaoEl.addEventListener('change', async () => {
+  if (filtroLesaoEl.value === 'todas') { renderizar(); return; }
+  try { await garantirCatalogoCompleto(); } catch (e) { console.warn(e); }
+  renderizar();
+});
 
 // -------------------------------------------- opções de exibição e download
 
@@ -963,9 +1070,11 @@ const mostrarIAEl = $('#mostrar-ia');
 const mostrarVotosEl = $('#mostrar-votos');
 mostrarIAEl.checked = estado.mostrarIA;
 mostrarVotosEl.checked = estado.mostrarVotos;
+atualizarFiltroLesao();
 mostrarIAEl.addEventListener('change', () => {
   estado.mostrarIA = mostrarIAEl.checked;
   salvarPrefs();
+  atualizarFiltroLesao();
   if (estado.mostrarIA && !estado.resumo) carregarResumo();
   renderizar();
   if (visor.open) desenharResumoVisor();

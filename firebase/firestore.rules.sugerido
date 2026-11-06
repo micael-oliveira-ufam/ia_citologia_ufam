@@ -41,5 +41,19 @@ service cloud.firestore {
                     && (resource.data.userId == request.auth.uid
                         || get(/databases/$(database)/documents/slides/$(resource.data.slideId)).data.creatorId == request.auth.uid);
     }
+
+    // Predição da IA interna (um documento por lâmina e por quem analisou).
+    // Qualquer usuário autenticado lê (para o filtro por tipo de lesão, quando liberado);
+    // só grava o próprio resultado.
+    match /predicoes/{id} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && id == request.resource.data.slideId + '_' + request.auth.uid
+                    && request.resource.data.aiClassification is string
+                    && request.resource.data.aiClassification.size() <= 20;
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
+    }
   }
 }
