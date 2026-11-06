@@ -167,8 +167,8 @@ EQUIPE = [
      "vinculo": "Instituto de Computação (IComp), UFAM"},
     {"nome": "Prof. Dr. Felipe Gomes de Oliveira", "papel": "Pesquisador parceiro em computação",
      "vinculo": "Instituto de Computação (IComp), UFAM"},
-    {"nome": "Dra. Ivanete", "papel": "Especialista clínica e citopatologista", "vinculo": "SEMSA Manaus"},
-    {"nome": "Dra. Carol", "papel": "Especialista clínica e citopatologista", "vinculo": "SEMSA Manaus"},
+    {"nome": "Dra. Ivanete de Lima Sampaio", "papel": "Especialista clínica e citopatologista", "vinculo": "SEMSA Manaus"},
+    {"nome": "Dra. Carolina Marinho da Costa", "papel": "Especialista clínica e citopatologista", "vinculo": "SEMSA Manaus"},
 ]
 
 INSTITUICOES = [
@@ -184,7 +184,7 @@ INSTITUICOES = [
      "papel": ("Parceria institucional de validação clínica e citopatológica, "
                "promovendo suporte prático e validação independente do catálogo "
                "digital de lâminas. Especialistas clínicas e citopatologistas "
-               "envolvidas: Dra. Ivanete e Dra. Carol.")},
+               "envolvidas: Dra. Ivanete de Lima Sampaio e Dra. Carolina Marinho da Costa.")},
 ]
 
 EXEMPLOS = [

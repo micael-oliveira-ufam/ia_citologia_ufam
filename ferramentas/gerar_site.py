@@ -36,13 +36,14 @@ def cabecalho():
     return f"""
 <header class="cabecalho">
   <div class="cab-linha">
-    <a class="cab-logo cab-logo--ufam" href="index.html" aria-label="Início"><img src="img/logo_ufam.png" alt="Universidade Federal do Amazonas" width="86"></a>
+    <a class="cab-logo cab-logo--plataforma" href="index.html" aria-label="IA Citologia: início"><img src="img/logo-plataforma-icone.svg" alt="" width="86" height="86"></a>
     <div class="cab-titulo">
       <div class="sobrancelha">UFAM · IComp · SEMSA Manaus</div>
       <h1>Sistema de Apoio ao Diagnóstico Citológico</h1>
       <p class="subtitulo">Citologia em meio líquido classificada pelo Sistema Bethesda, com ConvNeXt Large e mapa de atenção Grad-CAM.</p>
     </div>
     <div class="cab-logos">
+      <img src="img/logo_ufam.png" alt="Universidade Federal do Amazonas" height="52">
       <img src="img/logo-icomp.png" alt="Instituto de Computação, UFAM" height="52">
       <img src="img/semsa.png" alt="Secretaria Municipal de Saúde de Manaus" height="52">
     </div>
@@ -55,7 +56,7 @@ def cabecalho():
     <div class="credito-bloco"><div class="credito-titulo">Pesquisadores parceiros · IComp/UFAM</div>
       <div class="credito-nome">Profa. Dra. Fabíola Nakamura<br>Prof. Dr. Felipe Gomes de Oliveira</div></div>
     <div class="credito-bloco"><div class="credito-titulo">Validação clínica · SEMSA Manaus</div>
-      <div class="credito-nome">Dra. Ivanete · Dra. Carol</div><div class="credito-sub">Especialistas clínicas e citopatologistas</div></div>
+      <div class="credito-nome">Dra. Ivanete de Lima Sampaio · Dra. Carolina Marinho da Costa</div><div class="credito-sub">Especialistas clínicas e citopatologistas</div></div>
   </div>
   <div class="faixa-etica" role="note">{AVISO_ETICO_HTML}</div>
 </header>"""
@@ -130,9 +131,7 @@ def meta_seo():
   <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>"""
 
 
-ICONE = ("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 "
-         "height=%2732%27 rx=%277%27 fill=%27%230e6b7b%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2714%27 "
-         "font-family=%27sans-serif%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27white%27%3ECU%3C/text%3E%3C/svg%3E")
+ICONE = "img/logo-plataforma-icone.svg"
 
 
 def pagina(titulo, corpo, ativo, na_index, scripts, extra_head="", descricao=None):

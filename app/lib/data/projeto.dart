@@ -39,6 +39,16 @@ const List<Pessoa> equipe = [
     papel: 'Coordenação e orientação',
     vinculo: 'Faculdade de Ciências Farmacêuticas, UFAM',
   ),
+  Pessoa(
+    nome: 'Dra. Ivanete de Lima Sampaio',
+    papel: 'Especialista clínica e citopatologista',
+    vinculo: 'SEMSA Manaus',
+  ),
+  Pessoa(
+    nome: 'Dra. Carolina Marinho da Costa',
+    papel: 'Especialista clínica e citopatologista',
+    vinculo: 'SEMSA Manaus',
+  ),
 ];
 
 const List<Instituicao> instituicoes = [

@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/img/logo-plataforma.svg" alt="IA Citologia UFAM e SEMSA Manaus" width="520"></p>
+
 # CitoIlumina — colo do útero com IA
 
 Aplicativo Flutter (Android e iOS) que reúne, em um só lugar:

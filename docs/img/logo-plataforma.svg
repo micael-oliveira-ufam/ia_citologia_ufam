@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 200" width="740" height="200" role="img" aria-labelledby="t2">
+  <title id="t2">IA Citologia UFAM e SEMSA Manaus</title>
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14A3B5"/><stop offset="1" stop-color="#0A4553"/>
+    </linearGradient>
+    <radialGradient id="calor" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#FFD35C" stop-opacity=".95"/>
+      <stop offset=".55" stop-color="#FF9F1C" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#FF9F1C" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="lente2"><circle cx="100" cy="100" r="66"/></clipPath>
+  </defs>
+  <g transform="translate(0 0)">
+    <rect width="200" height="200" rx="46" fill="url(#fundo)"/>
+    <circle cx="100" cy="100" r="80" fill="none" stroke="#ffffff" stroke-opacity=".28" stroke-width="7"/>
+    <circle cx="100" cy="100" r="66" fill="#F4FBFC"/>
+    <g clip-path="url(#lente2)">
+      <circle cx="90" cy="102" r="37" fill="#D3EBF0" stroke="#0E6B7B" stroke-width="4"/>
+      <circle cx="90" cy="102" r="13" fill="#0A4553"/>
+      <circle cx="134" cy="70" r="19" fill="#D3EBF0" stroke="#0E6B7B" stroke-width="3.5"/>
+      <circle cx="134" cy="70" r="6.5" fill="#0A4553"/>
+      <circle cx="121" cy="144" r="16" fill="#D3EBF0" stroke="#0E6B7B" stroke-width="3.5"/>
+      <circle cx="121" cy="144" r="5.5" fill="#0A4553"/>
+      <circle cx="112" cy="126" r="36" fill="url(#calor)"/>
+    </g>
+    <circle cx="100" cy="100" r="66" fill="none" stroke="#0A4553" stroke-opacity=".3" stroke-width="4"/>
+    <path d="M158 22 C160 34 166 40 178 42 C166 44 160 50 158 62 C156 50 150 44 138 42 C150 40 156 34 158 22 Z" fill="#FFC83D"/>
+  </g>
+  <g font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="232" y="104" font-size="76" font-weight="800" fill="#0A4553" letter-spacing="-1.5">IA Citologia</text>
+    <text x="234" y="146" font-size="27" font-weight="500" fill="#566B7A">Diagnóstico citológico com IA</text>
+  </g>
+  <g font-family="'IBM Plex Mono', Menlo, Consolas, monospace">
+    <text x="234" y="178" font-size="19" font-weight="600" fill="#0E6B7B" letter-spacing="2">UFAM · SEMSA MANAUS</text>
+  </g>
+</svg>
