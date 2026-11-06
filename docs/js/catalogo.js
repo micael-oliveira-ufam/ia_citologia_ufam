@@ -689,7 +689,7 @@ function resumoIA(r) {
     r.instavel ? el('div', { class: 'pequeno' }, 'Predição de baixa confiança: trate como indefinida.') : null);
 }
 
-/** Grava a predição da IA no banco (qualquer lâmina). Devolve false se não foi possível. */
+/** Grava a predição da IA no banco (qualquer lâmina). Devolve { ok, erro } com o motivo real. */
 async function registrarPredicao(l, r) {
   try {
     await salvarPredicao({
@@ -698,10 +698,13 @@ async function registrarPredicao(l, r) {
     });
     adicionarIAResumo(l.id, r.sigla, r.confianca);
     estado.minhasIA.set(l.id, { sigla: r.sigla, confianca: Math.round(r.confianca * 1000) / 1000, quando: Date.now() });
-    return true;
+    return { ok: true, erro: null };
   } catch (e) {
     console.warn('Predição não gravada:', e);
-    return false;
+    const motivo = e.tipo === 'permissao'
+      ? 'O banco recusou a gravação: as regras do Firestore ainda não permitem salvar predições. Publique firebase/firestore.rules.sugerido no console do Firebase.'
+      : (e.tipo === 'login' ? 'Sem sessão anônima no banco. Recarregue a página.' : (e.tipo === 'rede' ? 'Sem conexão com o banco agora.' : (e.message || 'Erro desconhecido ao gravar.')));
+    return { ok: false, erro: motivo };
   }
 }
 
@@ -740,10 +743,10 @@ function painelAnalises(l, minha, falha) {
       if (erro) { iaMsg.textContent = erro; return; }
       iaMsg.textContent = '';
       iaSaida.append(resumoIA(resultado));
-      const gravou = await registrarPredicao(l, resultado);
-      iaSaida.append(el('p', { class: 'pequeno' }, gravou
+      const grava = await registrarPredicao(l, resultado);
+      iaSaida.append(el('p', { class: 'pequeno' }, grava.ok
         ? 'Predição salva no banco de dados.'
-        : 'Não foi possível salvar a predição agora (verifique a conexão). O resultado continua visível aqui.'));
+        : `Não foi possível salvar a predição. ${grava.erro} O resultado continua visível aqui.`));
       if (minha) {
         const novo = await salvarComplementoAvaliacao(l.id, {
           aiClassification: resultado.sigla, aiConfidence: Math.round(resultado.confianca * 1000) / 1000,
@@ -933,13 +936,15 @@ loteRodar.addEventListener('click', async () => {
     });
     const feitas = ativas.filter((lin) => lin.r);
     let gravadas = 0;
+    let motivoFalha = null;
     for (let i = 0; i < feitas.length; i++) {
       loteMsg.textContent = `Salvando predições no banco: ${i + 1} de ${feitas.length}…`;
-      if (await registrarPredicao(feitas[i].l, feitas[i].r)) gravadas++;
+      const g = await registrarPredicao(feitas[i].l, feitas[i].r);
+      if (g.ok) gravadas++; else motivoFalha = motivoFalha || g.erro;
     }
     loteMsg.textContent = `Concluído: ${ativas.length} lâmina(s) analisada(s) pela IA neste aparelho. ` +
       `${gravadas} predição(ões) salva(s) no banco de dados` +
-      (gravadas < feitas.length ? `; ${feitas.length - gravadas} não puderam ser salvas agora` : '') + '.' +
+      (gravadas < feitas.length ? `; ${feitas.length - gravadas} não puderam ser salvas. ${motivoFalha}` : '') + '.' +
       (ativas.length < loteLinhas.length ? ` ${loteLinhas.length - ativas.length} ficaram ocultas para preservar a avaliação cega.` : '');
     loteCsv.disabled = false;
   } catch (e) {
