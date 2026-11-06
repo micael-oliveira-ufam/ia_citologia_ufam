@@ -3,16 +3,23 @@ import 'package:flutter/material.dart';
 import '../catalogo/controle_catalogo.dart';
 import '../catalogo/modelos.dart';
 import '../config.dart';
+import '../servicos/classificador.dart';
 import '../tema.dart';
 import 'aba_catalogo.dart' show FotoLamina;
 import 'form_lamina.dart';
 
 /// Detalhe de uma lâmina: foto com zoom e avaliação cega.
 class TelaLamina extends StatefulWidget {
-  const TelaLamina({super.key, required this.controle, required this.lamina});
+  const TelaLamina({
+    super.key,
+    required this.controle,
+    required this.lamina,
+    this.classificador,
+  });
 
   final ControleCatalogo controle;
   final Lamina lamina;
+  final Classificador? classificador;
 
   @override
   State<TelaLamina> createState() => _TelaLaminaState();
@@ -24,6 +31,8 @@ class _TelaLaminaState extends State<TelaLamina> {
   final _observacoes = TextEditingController();
   bool _salvando = false;
   bool _refazendo = false;
+  bool _analisando = false;
+  Analise? _analise;
 
   ControleCatalogo get _c => widget.controle;
   Lamina get _l => widget.lamina;
@@ -71,6 +80,40 @@ class _TelaLaminaState extends State<TelaLamina> {
       if (mounted) _aviso('Não foi possível salvar: $e');
     } finally {
       if (mounted) setState(() => _salvando = false);
+    }
+  }
+
+  /// Roda o classificador no aparelho e grava a predição no banco (se houver login).
+  Future<void> _analisar() async {
+    final cls = widget.classificador;
+    final bytes = _l.bytes;
+    if (cls == null || bytes == null) {
+      _aviso('Esta lâmina não tem imagem para analisar.');
+      return;
+    }
+    setState(() => _analisando = true);
+    try {
+      final r = await cls.analisar(bytes);
+      if (!mounted) return;
+      setState(() => _analise = r);
+      if (!_c.sessao.logado) {
+        _aviso('Análise pronta. Entre com o Google para salvar a predição no banco.');
+        return;
+      }
+      try {
+        await _c.gravarPredicao(_l, r.sigla, r.confianca);
+        if (!mounted) return;
+        final podeVer = _c.ehCriador(_l) || _c.minhaAvaliacaoDe(_l.id) != null;
+        _aviso(podeVer
+            ? 'Predição salva no banco de dados.'
+            : 'Predição salva. Ela aparece aqui depois da sua avaliação cega.');
+      } catch (e) {
+        if (mounted) _aviso('Não foi possível salvar a predição: $e');
+      }
+    } catch (e) {
+      if (mounted) _aviso('Não foi possível analisar a imagem: $e');
+    } finally {
+      if (mounted) setState(() => _analisando = false);
     }
   }
 
@@ -295,6 +338,14 @@ class _TelaLaminaState extends State<TelaLamina> {
                 ),
               ],
               const SizedBox(height: 24),
+              _BlocoIA(
+                podeVer: minha != null || _c.ehCriador(_l),
+                salva: _c.predicaoDe(_l.id),
+                analise: _analise,
+                analisando: _analisando,
+                aoAnalisar: widget.classificador == null ? null : _analisar,
+              ),
+              const SizedBox(height: 24),
               const Text(
                 'Uso científico e educacional. A classificação por IA não é '
                 'aplicada ao catálogo e nada aqui substitui o laudo do '
@@ -305,6 +356,74 @@ class _TelaLaminaState extends State<TelaLamina> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Predição da IA. Só aparece para o usuário depois da própria avaliação cega
+/// (ou para o criador da lâmina), como no site.
+class _BlocoIA extends StatelessWidget {
+  const _BlocoIA({
+    required this.podeVer,
+    required this.salva,
+    required this.analise,
+    required this.analisando,
+    required this.aoAnalisar,
+  });
+
+  final bool podeVer;
+  final PredicaoSalva? salva;
+  final Analise? analise;
+  final bool analisando;
+  final VoidCallback? aoAnalisar;
+
+  static String _pct(double c) => '${(c * 100).toStringAsFixed(0)}%';
+
+  @override
+  Widget build(BuildContext context) {
+    final mensagens = <Widget>[];
+    if (!podeVer) {
+      mensagens.add(const Text(
+        'A predição da IA aparece aqui depois da sua avaliação cega, '
+        'para não influenciar a sua classificação.',
+        style: TextStyle(fontSize: 13, color: Cores.tintaFraca, height: 1.4),
+      ));
+    } else if (analise != null) {
+      mensagens.add(Text(
+        'Resultado desta análise: ${analise!.sigla} '
+        '(${_pct(analise!.confianca)} de confiança).',
+      ));
+    } else if (salva != null) {
+      mensagens.add(Text(
+        'Sua predição salva no banco: ${salva!.sigla} '
+        '(${_pct(salva!.confianca)} de confiança).',
+      ));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Predição por IA',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        ...mensagens,
+        if (aoAnalisar != null) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+            onPressed: analisando ? null : aoAnalisar,
+            icon: analisando
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  )
+                : const Icon(Icons.auto_awesome_outlined),
+            label: Text(analisando ? 'Analisando…' : 'Analisar com a IA e salvar'),
+          ),
+        ],
+      ],
     );
   }
 }

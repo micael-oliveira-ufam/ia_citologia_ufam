@@ -163,6 +163,28 @@ class Avaliacao {
   String get id => '${slideId}_$userId';
 }
 
+/// Predição da IA gravada no banco (coleção `predicoes`), uma por usuário e lâmina.
+class PredicaoSalva {
+  const PredicaoSalva({
+    required this.slideId,
+    required this.userId,
+    required this.sigla,
+    required this.confianca,
+    required this.modelo,
+    required this.quando,
+  });
+
+  final String slideId;
+  final String userId;
+  final String sigla;
+  final double confianca;
+  final String modelo;
+  final int quando;
+
+  /// ID do documento, igual ao do site: `lâmina_usuário`.
+  String get id => '${slideId}_$userId';
+}
+
 String formatarData(DateTime d) {
   String dois(int n) => n.toString().padLeft(2, '0');
   return '${dois(d.day)}/${dois(d.month)}/${d.year}';

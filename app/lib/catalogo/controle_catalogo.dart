@@ -54,13 +54,16 @@ class ControleCatalogo extends ChangeNotifier {
   final List<Lamina> laminas = [];
   Map<String, int>? _votos;
   final Map<String, Avaliacao> _minhas = {};
+  final Map<String, PredicaoSalva> _predicoes = {};
   String? _proximoToken;
   bool _fim = false;
   bool _carregando = false;
+  bool _carregandoTodas = false;
   bool _iniciou = false;
   ErroCatalogo? _erro;
 
   bool get carregando => _carregando;
+  bool get carregandoTodas => _carregandoTodas;
   bool get fim => _fim;
   ErroCatalogo? get erro => _erro;
 
@@ -72,6 +75,9 @@ class ControleCatalogo extends ChangeNotifier {
   int? votosDe(String slideId) => _votos == null ? null : (_votos![slideId] ?? 0);
 
   Avaliacao? minhaAvaliacaoDe(String slideId) => _minhas[slideId];
+
+  /// Predição de IA que o próprio usuário gravou para a lâmina, se houver.
+  PredicaoSalva? predicaoDe(String slideId) => _predicoes[slideId];
 
   bool ehCriador(Lamina l) =>
       usuario != null && l.criadorId != null && l.criadorId == usuario!.uid;
@@ -118,6 +124,25 @@ class ControleCatalogo extends ChangeNotifier {
     }
   }
 
+  /// Carrega o catálogo inteiro. Só é chamada por clique do usuário, nunca na abertura.
+  Future<void> carregarTodas() async {
+    if (_carregandoTodas) return;
+    _carregandoTodas = true;
+    notifyListeners();
+    try {
+      while (!_fim && _erro == null) {
+        if (_carregando) {
+          await Future<void>.delayed(const Duration(milliseconds: 150));
+        } else {
+          await carregarMais();
+        }
+      }
+    } finally {
+      _carregandoTodas = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> _carregarVotos() async {
     try {
       _votos = await remoto.contarVotos();
@@ -130,12 +155,18 @@ class ControleCatalogo extends ChangeNotifier {
   Future<void> _carregarMinhas() async {
     final u = usuario;
     _minhas.clear();
+    _predicoes.clear();
     if (u != null) {
       try {
         for (final a in await remoto.avaliacoesDoUsuario(u.uid)) {
           _minhas[a.slideId] = a;
         }
       } catch (_) {/* sem as avaliações, tudo aparece como pendente */}
+      try {
+        for (final p in await remoto.predicoesDoUsuario(u.uid)) {
+          _predicoes[p.slideId] = p;
+        }
+      } catch (_) {/* sem as predições, o app segue sem elas */}
     }
     notifyListeners();
   }
@@ -176,6 +207,27 @@ class ControleCatalogo extends ChangeNotifier {
     );
     await remoto.salvarAvaliacao(a);
     return a;
+  }
+
+  /// Grava no banco a predição de IA do usuário para a lâmina (exige login).
+  Future<void> gravarPredicao(
+    Lamina l,
+    String sigla,
+    double confianca, {
+    String modelo = 'colo-ia-app',
+  }) async {
+    final u = _exigirUsuario();
+    final p = PredicaoSalva(
+      slideId: l.id,
+      userId: u.uid,
+      sigla: sigla,
+      confianca: confianca,
+      modelo: modelo,
+      quando: DateTime.now().millisecondsSinceEpoch,
+    );
+    await remoto.salvarPredicao(p);
+    _predicoes[l.id] = p;
+    notifyListeners();
   }
 
   /// Registra (ou refaz) a avaliação cega do usuário para a lâmina.

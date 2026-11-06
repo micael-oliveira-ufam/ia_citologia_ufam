@@ -4,6 +4,7 @@ import '../catalogo/controle_catalogo.dart';
 import '../catalogo/firestore_rest.dart';
 import '../catalogo/modelos.dart';
 import '../config.dart';
+import '../servicos/classificador.dart';
 import '../tema.dart';
 import 'form_lamina.dart';
 import 'tela_lamina.dart';
@@ -62,9 +63,10 @@ class FotoLamina extends StatelessWidget {
 /// descrição nem observação de ninguém; vê só a foto, o ID, a data e quantos
 /// votos ela tem. Depois de avaliar, vê a própria avaliação.
 class AbaCatalogo extends StatefulWidget {
-  const AbaCatalogo({super.key, required this.controle});
+  const AbaCatalogo({super.key, required this.controle, this.classificador});
 
   final ControleCatalogo controle;
+  final Classificador? classificador;
 
   @override
   State<AbaCatalogo> createState() => _AbaCatalogoState();
@@ -223,6 +225,7 @@ class _AbaCatalogoState extends State<AbaCatalogo> {
                             builder: (_) => TelaLamina(
                               controle: c,
                               lamina: lista[i],
+                              classificador: widget.classificador,
                             ),
                           ),
                         ),
@@ -520,6 +523,18 @@ class _Rodape extends StatelessWidget {
             icon: const Icon(Icons.expand_more),
             label: const Text('Carregar mais lâminas'),
           ),
+        if (!c.fim) ...[
+          const SizedBox(height: 8),
+          // Só carrega o catálogo inteiro quando o usuário pede.
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+            onPressed: c.carregandoTodas ? null : c.carregarTodas,
+            icon: const Icon(Icons.download_for_offline_outlined),
+            label: Text(c.carregandoTodas
+                ? 'Carregando todas as lâminas…'
+                : 'Carregar todas as lâminas'),
+          ),
+        ],
         if (!c.votosDisponiveis && c.laminas.isNotEmpty)
           const Padding(
             padding: EdgeInsets.only(top: 12),

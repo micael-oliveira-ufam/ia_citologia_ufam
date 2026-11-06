@@ -140,6 +140,7 @@ class _CascaState extends State<Casca> {
           pagina: _CatalogoPreguicoso(
             ativa: () => _indice == 2,
             criar: () => _controleCatalogo,
+            classificador: widget.classificador,
           ),
         ),
         _Aba(
@@ -226,10 +227,15 @@ class _CascaState extends State<Casca> {
 /// Só monta [AbaCatalogo] (e portanto só acessa a rede) depois que a aba foi
 /// aberta uma vez; depois disso ela fica montada no IndexedStack.
 class _CatalogoPreguicoso extends StatefulWidget {
-  const _CatalogoPreguicoso({required this.ativa, required this.criar});
+  const _CatalogoPreguicoso({
+    required this.ativa,
+    required this.criar,
+    required this.classificador,
+  });
 
   final bool Function() ativa;
   final ControleCatalogo Function() criar;
+  final Classificador classificador;
 
   @override
   State<_CatalogoPreguicoso> createState() => _CatalogoPreguicosoState();
@@ -242,6 +248,6 @@ class _CatalogoPreguicosoState extends State<_CatalogoPreguicoso> {
   Widget build(BuildContext context) {
     if (!_aberta && widget.ativa()) _aberta = true;
     if (!_aberta) return const SizedBox.shrink();
-    return AbaCatalogo(controle: widget.criar());
+    return AbaCatalogo(controle: widget.criar(), classificador: widget.classificador);
   }
 }

@@ -336,6 +336,29 @@ class CatalogoRemoto {
     ];
   }
 
+  /// Predições de IA gravadas pelo próprio usuário.
+  Future<List<PredicaoSalva>> predicoesDoUsuario(String uid) async {
+    final docs = await _consultarIgual('predicoes', 'userId', uid);
+    final saida = <PredicaoSalva>[];
+    for (final d in docs) {
+      final c = _lerCampos(d['fields'] as Map<String, dynamic>?);
+      final slideId = c['slideId'];
+      final sigla = c['aiClassification'];
+      if (slideId is! String || sigla is! String) continue;
+      final confianca = c['aiConfidence'];
+      final quando = c['analyzedAt'];
+      saida.add(PredicaoSalva(
+        slideId: slideId,
+        userId: uid,
+        sigla: sigla,
+        confianca: confianca is num ? confianca.toDouble() : 0,
+        modelo: c['aiModelVersion'] is String ? c['aiModelVersion'] as String : '',
+        quando: quando is int ? quando : 0,
+      ));
+    }
+    return saida;
+  }
+
   // ----------------------------------------------------------------- escrita
 
   /// Cria uma lâmina e devolve o ID do documento.
@@ -398,6 +421,24 @@ class CatalogoRemoto {
         'morphologyDescription': a.descricao,
         'notes': a.observacoes,
         'createdAt': a.criadaEm,
+      }),
+      exigeLogin: true,
+    );
+  }
+
+  /// Grava (ou atualiza) a predição de IA do usuário para a lâmina.
+  Future<void> salvarPredicao(PredicaoSalva p) async {
+    await _enviar(
+      'PATCH',
+      _url('/predicoes/${Uri.encodeComponent(p.id)}'),
+      corpo: _corpo({
+        'id': p.id,
+        'slideId': p.slideId,
+        'userId': p.userId,
+        'aiClassification': p.sigla,
+        'aiConfidence': p.confianca,
+        'aiModelVersion': p.modelo,
+        'analyzedAt': p.quando,
       }),
       exigeLogin: true,
     );
