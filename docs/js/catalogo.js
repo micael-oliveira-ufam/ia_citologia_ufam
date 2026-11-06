@@ -10,7 +10,7 @@ import { $, el, limpar, formatarData, idPublico, urlImagemSegura, iniciarPagina 
 import {
   listarLaminas, contarVotos, minhasAvaliacoes, proximoId, criarLamina, atualizarLamina,
   excluirLamina, salvarAvaliacao, salvarComplementoAvaliacao, salvarPredicao, resumoPredicoes, entrar, uidAtual, ErroFirestore,
-  resumoAvaliacoes,
+  resumoAvaliacoes, minhasPredicoes,
 } from './firestore.js?v=7';
 import { comprimirImagem } from './imagem.js?v=5';
 import {
@@ -42,6 +42,7 @@ const estado = {
   votosCompleto: true,
   erro: null,
   minhas: new Map(), // slideId -> minha avaliação
+  minhasIA: new Map(), // slideId -> minha predição da IA salva no banco
   selecionadas: new Set(),
   revelarIA: false, // o usuário aceitou ver a IA antes de avaliar (pode influenciar a avaliação cega)
   mostrarIA: lerPrefs().ia === true, // opt-in: classificações humanas e predições da IA nos cartões
@@ -104,7 +105,11 @@ async function carregarResumo() {
   try {
     const [{ mapa }, pred] = await Promise.all([
       resumoAvaliacoes(),
-      resumoPredicoes().then((r) => r.mapa).catch((e) => { console.warn('Predições indisponíveis:', e); return new Map(); }),
+      resumoPredicoes().then((r) => { avisarBanco(''); return r.mapa; }).catch((e) => {
+        console.warn('Predições indisponíveis:', e);
+        avisarBanco(`Não foi possível ler as predições da IA no banco. ${e.message || ''}`.trim());
+        return new Map();
+      }),
     ]);
     for (const [id, lista] of pred) {
       const atual = mapa.get(id) || [];
@@ -130,6 +135,8 @@ const filtroVotosEl = $('#filtro-votos');
 const filtroPastaEl = $('#filtro-pasta');
 const filtroLesaoEl = $('#filtro-lesao');
 const notaLesao = $('#nota-lesao');
+const avisoBanco = $('#aviso-banco');
+function avisarBanco(msg) { avisoBanco.textContent = msg || ''; avisoBanco.hidden = !msg; }
 const notaVotos = $('#nota-votos');
 
 // ---------------------------------------------------------------- dados
@@ -292,7 +299,9 @@ function cartao(l) {
   },
   el('div', { class: 'lamina__foto' },
     el('img', { src: url, alt: `Campo microscópico da ${id.texto}`, loading: 'lazy', decoding: 'async' }),
-    el('span', { class: 'lamina__selo' }, souCriador(l) ? 'Sua lâmina' : 'Classificação oculta'),
+    (souCriador(l) || !estado.mostrarIA)
+      ? el('span', { class: 'lamina__selo' }, souCriador(l) ? 'Sua lâmina' : 'Classificação oculta')
+      : null,
     estado.minhas.has(l.id) ? el('span', { class: 'lamina__selo lamina__selo--esq' }, 'Avaliada por você') : null),
   el('div', { class: 'lamina__corpo' },
     el('div', { class: 'lamina__linha' },
@@ -688,6 +697,7 @@ async function registrarPredicao(l, r) {
       confianca: Math.round(r.confianca * 1000) / 1000, modelo: 'colo-ia-web',
     });
     adicionarIAResumo(l.id, r.sigla, r.confianca);
+    estado.minhasIA.set(l.id, { sigla: r.sigla, confianca: Math.round(r.confianca * 1000) / 1000, quando: Date.now() });
     return true;
   } catch (e) {
     console.warn('Predição não gravada:', e);
@@ -704,6 +714,11 @@ function painelAnalises(l, minha, falha) {
   const iaMsg = el('p', { class: 'pequeno', role: 'status' });
   const iaProg = el('progress', { max: 100, hidden: true, 'aria-label': 'Progresso' });
   const iaSaida = el('div', {});
+  const salva = estado.minhasIA.get(l.id);
+  if (salva?.sigla && podeVerIA) { // só depois da avaliação ou para o criador (avaliação cega)
+    iaSaida.append(el('p', { class: 'pequeno' }, 'Sua predição salva no banco:'),
+      resumoIA({ sigla: salva.sigla, confianca: salva.confianca, instavel: salva.confianca != null && salva.confianca < 0.6 }));
+  }
   const rodar = el('button', { class: 'btn btn--sec btn--mini', type: 'button' },
     podeVerIA ? 'Analisar com a IA' : 'Analisar com a IA (revela a sugestão)');
   rodar.addEventListener('click', async () => {
@@ -796,16 +811,18 @@ function painelAnalises(l, minha, falha) {
     const m = estado.minhas.get(l.id);
     comp.append(el('h4', {}, 'Comparação das análises'));
     if (!m) { comp.append(el('p', { class: 'pequeno' }, 'Avalie a lâmina para liberar a comparação entre humano, IA e validador externo.')); return; }
+    const iaSigla = m.aiClassification || estado.minhasIA.get(l.id)?.sigla || null;
+    const iaConf = m.aiClassification ? m.aiConfidence : estado.minhasIA.get(l.id)?.confianca;
     const linhas = [
       ['Análise humana (sua)', m.classification],
-      ['IA interna', m.aiClassification ? `${m.aiClassification}${m.aiConfidence ? ` (${pct(m.aiConfidence)})` : ''}` : null],
+      ['IA interna', iaSigla ? `${iaSigla}${iaConf ? ` (${pct(iaConf)})` : ''}` : null],
       ['Validador externo', m.externalClassification || null],
     ];
     comp.append(el('table', { class: 'tabela' }, el('tbody', {}, ...linhas.map(([a, b]) =>
       el('tr', {}, el('td', {}, a), el('td', {}, el('strong', {}, b || 'ainda não feita'))))))); 
-    const hi = comparar(m.classification, m.aiClassification);
+    const hi = comparar(m.classification, iaSigla);
     const he = comparar(m.classification, m.externalClassification === 'Inconclusivo' ? null : m.externalClassification);
-    const ie = comparar(m.aiClassification, m.externalClassification === 'Inconclusivo' ? null : m.externalClassification);
+    const ie = comparar(iaSigla, m.externalClassification === 'Inconclusivo' ? null : m.externalClassification);
     const notas = [['humano × IA', hi], ['humano × externo', he], ['IA × externo', ie]].filter(([, v]) => v);
     if (notas.length) {
       comp.append(el('p', { class: 'pequeno' }, notas.map(([k, v]) => `${k}: ${v}`).join(' · ')));
@@ -1244,6 +1261,7 @@ async function iniciar() {
   painelConexao.hidden = true;
   conteudoCatalogo.hidden = false;
   try { estado.minhas = await minhasAvaliacoes(); } catch (e) { console.warn('Minhas avaliações indisponíveis:', e); }
+  try { estado.minhasIA = await minhasPredicoes(); } catch (e) { console.warn('Minhas predições indisponíveis:', e); }
   carregarMais();
   carregarVotos();
 }

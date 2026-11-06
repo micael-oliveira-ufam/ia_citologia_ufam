@@ -349,3 +349,17 @@ export async function resumoPredicoes({ sinal, maxPaginas = 40 } = {}) {
   }
   return { mapa, completo: false };
 }
+
+/** Predições da IA deste usuário: Map(slideId -> { sigla, confianca, quando }). */
+export async function minhasPredicoes({ sinal } = {}) {
+  await entrar();
+  const docs = await consultar('predicoes', 'userId', uidAtual(), { sinal });
+  const mapa = new Map();
+  for (const d of docs) {
+    const a = documentoParaObjeto(d);
+    if (a.slideId && a.aiClassification) {
+      mapa.set(a.slideId, { sigla: a.aiClassification, confianca: a.aiConfidence ?? null, quando: a.analyzedAt ?? null });
+    }
+  }
+  return mapa;
+}
